@@ -1,0 +1,186 @@
+package station
+
+import (
+	"bikeRental/pkg/entity"
+	sdb "bikeRental/pkg/services/station/sDB"
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"time"
+
+	trestCommon "github.com/Trestx-technology/trestx-common-go-lib"
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
+)
+
+var service = sdb.NewService()
+
+// AddStation adds a new station
+func AddStation(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	defer func() {
+		trestCommon.DLogMap("brand updated", logrus.Fields{
+			"duration": time.Since(startTime),
+		})
+	}()
+	trestCommon.DLogMap("setting brand", logrus.Fields{
+		"start_time": startTime})
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	station, err := getStation(r)
+	if err != nil {
+		trestCommon.ECLog1(errors.Wrapf(err, "unable to get station"))
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Something Went wrong"})
+		return
+	}
+	data, err := service.AddStation(station)
+	if err != nil {
+		trestCommon.ECLog1(errors.Wrapf(err, "unable to add station"))
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to add station"})
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+}
+
+// UpdateStation updates a station
+func UpdateStation(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	defer func() {
+		trestCommon.DLogMap("brand updated", logrus.Fields{
+			"duration": time.Since(startTime),
+		})
+	}()
+	trestCommon.DLogMap("setting brand", logrus.Fields{
+		"start_time": startTime})
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	station, err := getStation(r)
+	if err != nil {
+		trestCommon.ECLog1(errors.Wrapf(err, "unable to get station"))
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Something Went wrong"})
+		return
+	}
+	id := mux.Vars(r)["id"]
+	data, err := service.UpdateStation(id, station)
+	if err != nil {
+		trestCommon.ECLog1(errors.Wrapf(err, "unable to update station"))
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to update station"})
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+}
+
+// DeleteStation deletes a station
+func DeleteStation(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	defer func() {
+		trestCommon.DLogMap("brand updated", logrus.Fields{
+			"duration": time.Since(startTime),
+		})
+	}()
+	trestCommon.DLogMap("setting brand", logrus.Fields{
+		"start_time": startTime})
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	id := mux.Vars(r)["id"]
+	err := service.DeleteStation(id)
+	if err != nil {
+		trestCommon.ECLog1(err)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to delete station"})
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(bson.M{"status": true, "error": ""})
+}
+
+// GetAllStations gets all stations
+func GetAllStations(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	defer func() {
+		trestCommon.DLogMap("brand updated", logrus.Fields{
+			"duration": time.Since(startTime),
+		})
+	}()
+	trestCommon.DLogMap("setting brand", logrus.Fields{
+		"start_time": startTime})
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	data, err := service.GetStation()
+	if err != nil {
+		trestCommon.ECLog1(err)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to get stations"})
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+}
+
+// GetNearByStations gets all stations near by
+func GetNearByStations(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	defer func() {
+		trestCommon.DLogMap("brand updated", logrus.Fields{
+			"duration": time.Since(startTime),
+		})
+	}()
+	trestCommon.DLogMap("setting brand", logrus.Fields{
+		"start_time": startTime})
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	lat := r.URL.Query().Get("lat")
+	lon := r.URL.Query().Get("long")
+	distance := r.URL.Query().Get("distance")
+	latFloat, _ := strconv.ParseFloat(lat, 64)
+	lonFloat, _ := strconv.ParseFloat(lon, 64)
+	distanceInt, _ := strconv.Atoi(distance)
+	data, err := service.GetNearByStation(latFloat, lonFloat, distanceInt)
+	if err != nil {
+		trestCommon.ECLog1(err)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to get stations"})
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+}
+func GetStationsByID(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	defer func() {
+		trestCommon.DLogMap("brand updated", logrus.Fields{
+			"duration": time.Since(startTime),
+		})
+	}()
+	trestCommon.DLogMap("setting brand", logrus.Fields{
+		"start_time": startTime})
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	id := mux.Vars(r)["id"]
+	data, err := service.GetStationByID(id)
+	if err != nil {
+		trestCommon.ECLog1(err)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to get stations"})
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+}
+
+func getStation(r *http.Request) (entity.StationDB, error) {
+	var station entity.StationDB
+	err := json.NewDecoder(r.Body).Decode(&station)
+	if err != nil {
+		return entity.StationDB{}, errors.Wrap(err, "unable to decode request payload")
+	}
+	return station, nil
+}
