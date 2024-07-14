@@ -3,6 +3,7 @@ package udb
 import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/repo/profile"
+	"bikeRental/pkg/services/notifications/notify"
 	pdb "bikeRental/pkg/services/plan/pDB"
 	userattendance "bikeRental/pkg/services/userAttendance"
 	"strconv"
@@ -26,6 +27,7 @@ var (
 func (s *service) GetUserById(id string) (entity.ProfileOut, error) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
 	filter := bson.M{"_id": idObject}
+	filter["status"] = bson.M{"$ne": "deleted"}
 	res, err := repo.Aggregate(createPipeline(filter))
 	if err != nil {
 		return entity.ProfileOut{}, err
@@ -37,6 +39,9 @@ func (s *service) GetUserById(id string) (entity.ProfileOut, error) {
 	res[0].Password = nil
 	if res[0].PlanID != nil {
 		res[0].PlanRemainingTime = res[0].PlanEndTime - time.Now().Unix()
+		if res[0].PlanRemainingTime < 0 {
+			RemovePlan(res[0].ID.Hex())
+		}
 	}
 	if len(res[0].Wallet) == 0 {
 		res[0].TotalBalance = 0
@@ -87,6 +92,9 @@ func (s *service) GetUsers(userType string) ([]entity.ProfileOut, error) {
 		}
 		if res[i].PlanID != nil {
 			res[i].PlanRemainingTime = res[i].PlanEndTime - time.Now().Unix()
+			if res[i].PlanRemainingTime < 0 {
+				RemovePlan(res[i].ID.Hex())
+			}
 		}
 	}
 	return res, err
@@ -155,21 +163,35 @@ func createStaffPipeline(filter bson.M) bson.A {
 func (s *service) UpdateUser(id string, user entity.ProfileDB) (string, error) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
 	filter := bson.M{"_id": idObject}
+	userN, err := repo.FindOne(filter, bson.M{})
+	if err != nil {
+		return "", err
+	}
 	set := bson.M{}
 	if user.Name != "" {
 		set["name"] = user.Name
 	}
+	if user.CountryCode != nil && *user.CountryCode != "" {
+		set["country_code"] = *user.CountryCode
+	}
+
 	if user.UserBlocked != nil {
 		set["user_blocked"] = user.UserBlocked
 		set["blocked_by"] = user.BlockedBy
 		set["blocked_time"] = time.Now()
 		set["block_reason"] = user.BlockReason
 	}
-	if user.IDImage != "" {
-		set["id_image"] = user.IDImage
+	if user.IDFrontImage != "" {
+		set["id_front_image"] = user.IDFrontImage
 	}
-	if user.DLImage != "" {
-		set["dl_image"] = user.DLImage
+	if user.IDBackImage != "" {
+		set["id_back_image"] = user.IDBackImage
+	}
+	if user.DLFrontImage != "" {
+		set["dl_front_image"] = user.DLFrontImage
+	}
+	if user.DLBackImage != "" {
+		set["dl_back_image"] = user.DLBackImage
 	}
 	if user.PlanActive != nil {
 		set["plan_active"] = user.PlanActive
@@ -181,10 +203,16 @@ func (s *service) UpdateUser(id string, user entity.ProfileDB) (string, error) {
 		set["dob"] = user.DOB
 	}
 	if user.IDVerified != nil {
-		set["id_verified"] = user.IDVerified
+		set["id_verified"] = *user.IDVerified
+		if *user.IDVerified && userN.FirebaseToken != nil {
+			notify.NewService().SendNotification("ID Verified", "Your ID has been verified", userN.ID.Hex(), *userN.FirebaseToken)
+		}
 	}
 	if user.DLVerified != nil {
-		set["dl_verified"] = user.DLVerified
+		set["dl_verified"] = *user.DLVerified
+		if *user.DLVerified && userN.FirebaseToken != nil {
+			notify.NewService().SendNotification("DL Verified", "Your DL has been verified", userN.ID.Hex(), *userN.FirebaseToken)
+		}
 	}
 	if user.Gender != nil && *user.Gender != "" {
 		set["gender"] = *user.Gender
@@ -239,4 +267,30 @@ func (s *service) UpdateUser(id string, user entity.ProfileDB) (string, error) {
 	setS["$inc"] = inc
 
 	return repo.UpdateOne(filter, setS)
+}
+
+func (s *service) DeleteUser(id string) (string, error) {
+	idObject, _ := primitive.ObjectIDFromHex(id)
+	filter := bson.M{"_id": idObject}
+	return repo.UpdateOne(filter, bson.M{"$set": bson.M{"status": "deleted"}})
+}
+
+func ChangeServiceType(id string, serviceType string) (string, error) {
+	idObject, _ := primitive.ObjectIDFromHex(id)
+	filter := bson.M{"_id": idObject}
+	set := bson.M{}
+	set["service_type"] = serviceType
+	set["update_time"] = time.Now()
+	return repo.UpdateOne(filter, bson.M{"$set": set})
+}
+func RemovePlan(userId string) (string, error) {
+	idObject, _ := primitive.ObjectIDFromHex(userId)
+	filter := bson.M{"_id": idObject}
+	set := bson.M{}
+	set["plan_id"] = ""
+	set["plan"] = nil
+	set["plan_active"] = false
+	set["plan_start_time"] = 0
+	set["plan_end_time"] = 0
+	return repo.UpdateOne(filter, bson.M{"$set": set})
 }

@@ -99,3 +99,26 @@ func getUser(r *http.Request) (entity.ProfileDB, error) {
 	}
 	return user, nil
 }
+
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	defer func() {
+		trestCommon.DLogMap("brand updated", logrus.Fields{
+			"duration": time.Since(startTime),
+		})
+	}()
+	trestCommon.DLogMap("setting brand", logrus.Fields{
+		"start_time": startTime})
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	id := mux.Vars(r)["id"]
+	_, err := service.DeleteUser(id)
+	if err != nil {
+		trestCommon.ECLog1(err)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to delete user"})
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(bson.M{"status": true, "error": ""})
+}

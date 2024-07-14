@@ -4,7 +4,10 @@ import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/repo/wallet"
 	bookingDB "bikeRental/pkg/services/booking/db"
+	"bikeRental/pkg/services/notifications/notify"
 	pdb "bikeRental/pkg/services/plan/pDB"
+	"bikeRental/pkg/services/users/udb"
+	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -40,6 +43,10 @@ func (s *service) FindMy(userId string) (WalletTotal, error) {
 // InsertOne implements Wallet.
 func (s *service) InsertOne(document entity.WalletS) (WalletTotal, error) {
 	document.ID = primitive.NewObjectID()
+	user, err := udb.NewService().GetUserById(document.UserID)
+	if err != nil && user.Name != "" {
+		return WalletTotal{}, err
+	}
 	if document.BookingID != "" {
 		booking, err := bookingDB.GetBooking(document.BookingID)
 		if err != nil {
@@ -56,12 +63,17 @@ func (s *service) InsertOne(document entity.WalletS) (WalletTotal, error) {
 	}
 	document.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
 
-	_, err := repo.InsertOne(document)
+	_, err = repo.InsertOne(document)
 
 	if err != nil {
 		return WalletTotal{}, err
 	}
-
+	if document.RefundedMoney != 0 {
+		if user.FirebaseToken != nil {
+			refund := strconv.FormatFloat(document.RefundedMoney, 'f', -1, 64)
+			notify.NewService().SendNotification("Refund", "Refund of "+refund+" has been credited to your wallet", document.UserID, *user.FirebaseToken)
+		}
+	}
 	return getWalletTotal(document.UserID)
 }
 
@@ -71,13 +83,16 @@ func getWalletTotal(userID string) (WalletTotal, error) {
 		return WalletTotal{}, err
 	}
 	var totalBalance float64
+	var refundableMoney float64
 	for _, w := range wallets {
 		totalBalance += w.DepositedMoney
 		totalBalance -= w.UsedMoney
+		refundableMoney += w.RefundableMoney - w.RefundedMoney
 	}
 	walletL := WalletTotal{
-		Wallets:      wallets,
-		TotalBalance: totalBalance,
+		Wallets:         wallets,
+		TotalBalance:    totalBalance,
+		RefundableMoney: refundableMoney,
 	}
 	return walletL, nil
 }

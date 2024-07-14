@@ -43,6 +43,9 @@ func (*accountService) SignUp(cred Credentials) (string, error) {
 		cred.Role = new(string)
 		*cred.Role = "user"
 	}
+	if cred.Role != nil && *cred.Role == "" {
+		*cred.Role = "user"
+	}
 	if cred.PhoneNo == "" {
 		err := errors.New("email or phone number required")
 		trestCommon.ECLog2("sign up failed email or phone number required", err)
@@ -50,7 +53,7 @@ func (*accountService) SignUp(cred Credentials) (string, error) {
 
 	}
 	cred.Email = strings.ToLower(cred.Email)
-	_, err := checkUser(cred.Email, cred.PhoneNo)
+	_, err := CheckUser(cred.Email, cred.PhoneNo)
 
 	if err != nil {
 		trestCommon.ECLog2("sign up user not found", err)
@@ -85,9 +88,9 @@ func (*accountService) SendVerificationEmail(email, pemail, uid string) (string,
 	}
 	var userData entity.ProfileDB
 	if pemail != "" {
-		userData, _ = checkUser(pemail, "")
+		userData, _ = CheckUser(pemail, "")
 	} else {
-		userData, _ = checkUser(email, "")
+		userData, _ = CheckUser(email, "")
 	}
 	_, err = utils.SendVerificationCode(email, userData.Name, sendCode)
 	if err != nil {
@@ -118,7 +121,7 @@ func (*accountService) SendEmailOTP(email string) (string, error) {
 	if email == "" {
 		return "", errors.New("email id required")
 	}
-	_, err := checkUser(email, "")
+	_, err := CheckUser(email, "")
 	if err != nil {
 		return "", errors.New("user account doesn't exist")
 	}
@@ -134,12 +137,16 @@ func (*accountService) SendEmailOTP(email string) (string, error) {
 	return "email sent successfully", nil
 }
 func (*accountService) LoginUsingPhone(phone string) (string, error) {
-	data, err := checkUser("", phone)
+	data, err := CheckUser("", phone)
 	if err != nil {
 		trestCommon.ECLog3("verify user not found", err, logrus.Fields{"phone": phone})
 		return "", err
 	}
+	if data.Status == "deleted" {
+		return "user deleted", nil
+	}
 	code := strconv.Itoa(100000 + rand.Intn(999999-100000))
+
 	utils.SendVarificationSMS(phone, code)
 	_, err = repo.UpdateOne(bson.M{"_id": data.ID}, bson.M{"$set": bson.M{"verified_time": time.Now(), "phone_otp": code}})
 	if err != nil {
@@ -150,7 +157,7 @@ func (*accountService) LoginUsingPhone(phone string) (string, error) {
 }
 
 func (*accountService) VerifyOTP(phone, otp, token string) (*entity.ProfileDB, string, error) {
-	data, err := checkUser("", phone)
+	data, err := CheckUser("", phone)
 	if err != nil {
 		trestCommon.ECLog3("verify user not found", err, logrus.Fields{"phone": phone})
 		return nil, "", err
@@ -178,7 +185,7 @@ func (serv *accountService) LoginUsingPassword(cred Credentials) (entity.Profile
 	}
 	cred.Email = strings.ToLower(cred.Email)
 	salt := viper.GetString("salt")
-	userData, err := checkUser(cred.Email, "")
+	userData, err := CheckUser(cred.Email, "")
 	if err != nil {
 		trestCommon.ECLog2("login failed user not found", err)
 		return entity.ProfileDB{}, "", err
@@ -208,7 +215,7 @@ func (serv *accountService) LoginUsingPassword(cred Credentials) (entity.Profile
 	return userData, tokenString, nil
 }
 func (*accountService) ChangePassword(cred Credentials) (string, error) {
-	userData, err := checkUser(cred.Email, "")
+	userData, err := CheckUser(cred.Email, "")
 	if err != nil {
 		trestCommon.ECLog3("verify user not found", err, logrus.Fields{"email": cred.Email})
 		return "", err
@@ -228,7 +235,7 @@ func (*accountService) ChangePassword(cred Credentials) (string, error) {
 
 func (*accountService) VerifyEmail(cred Credentials) (string, error) {
 
-	userData, err := checkUser(cred.Email, "")
+	userData, err := CheckUser(cred.Email, "")
 	if err != nil {
 		trestCommon.ECLog3("verify user not found", err, logrus.Fields{"email": cred.Email})
 		return "", err
@@ -252,7 +259,7 @@ func (*accountService) VerifyEmail(cred Credentials) (string, error) {
 	return "verified", nil
 }
 
-func checkUser(email, mobile string) (entity.ProfileDB, error) {
+func CheckUser(email, mobile string) (entity.ProfileDB, error) {
 
 	if email != "" && mobile != "" {
 		return repo.FindOne(bson.M{"$or": bson.A{bson.M{"email": email}, bson.M{"phone_no": mobile}}}, bson.M{})
@@ -329,7 +336,7 @@ func (*accountService) hashAndInsertData(cred Credentials) (string, error) {
 func (*accountService) SendResetLink(email string) (string, error) {
 	var cred Credentials
 	cred.Email = email
-	_, err := checkUser(cred.Email, "")
+	_, err := CheckUser(cred.Email, "")
 	if err != nil {
 		trestCommon.ECLog2("user not found", err)
 		return "", err
@@ -357,7 +364,7 @@ func (*accountService) SendResetLink(email string) (string, error) {
 
 func (*accountService) VerifyResetLink(cred Credentials) (string, string, error) {
 
-	userData, err := checkUser(cred.Email, "")
+	userData, err := CheckUser(cred.Email, "")
 	if err != nil {
 		trestCommon.ECLog3("verify user not found", err, logrus.Fields{"email": cred.Email})
 		return "", "", err

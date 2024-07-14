@@ -5,6 +5,8 @@ import (
 	"bikeRental/pkg/repo/booking"
 	db "bikeRental/pkg/services/account/dbs"
 	bookedlogic "bikeRental/pkg/services/bookedBike/logic"
+	"bikeRental/pkg/services/notifications/notify"
+	"bikeRental/pkg/services/users/udb"
 
 	bDB "bikeRental/pkg/services/bikeDevice/db"
 	bikedb "bikeRental/pkg/services/iotBike/db"
@@ -86,6 +88,10 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	if err == nil {
 		document.Plan = &plan
 		document.City = plan.City
+	}
+	udb.ChangeServiceType(document.ProfileID, document.BookingType)
+	if userData[0].FirebaseToken != nil {
+		notify.NewService().SendNotification("Booking", "Your booking has been confirmed", document.ProfileID, *userData[0].FirebaseToken)
 	}
 	return repo.InsertOne(document)
 }
@@ -292,6 +298,15 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 					}
 					set["price"] = price
 				}
+				udb.ChangeServiceType(document.ProfileID, "")
+				userData, err := db.GetUser([]string{booking.ProfileID})
+				if err == nil && len(userData) > 0 {
+					return "", errors.New("user already has a booking")
+				}
+				if userData[0].FirebaseToken != nil {
+					notify.NewService().SendNotification("Booking", "Your booking has been confirmed", booking.ProfileID, *userData[0].FirebaseToken)
+				}
+
 			}
 		} else {
 			return "", errors.New("ending station not found")

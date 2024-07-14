@@ -39,8 +39,10 @@ type ProfileDB struct {
 	LastLoginLocation   *string            `bson:"last_login_location" json:"lastLoginLocation,omitempty"`
 	Online              *bool              `bson:"online" json:"online,omitempty"`
 	DLVerified          *bool              `bson:"dl_verified" json:"dlVerified,omitempty"`
-	DLImage             string             `bson:"dl_image" json:"dlImage,omitempty"`
-	IDImage             string             `bson:"id_image" json:"idImage,omitempty"`
+	DLFrontImage        string             `bson:"dl_front_image" json:"dlFrontImage,omitempty"`
+	DLBackImage         string             `bson:"dl_back_image" json:"dlBackImage,omitempty"`
+	IDFrontImage        string             `bson:"id_front_image" json:"idFrontImage,omitempty"`
+	IDBackImage         string             `bson:"id_back_image" json:"idBackImage,omitempty"`
 	IDVerified          *bool              `bson:"id_verified" json:"idVerified,omitempty"`
 	PlanID              *string            `bson:"plan_id" json:"planId,omitempty"`
 	Plan                *PlanDB            `bson:"plan" json:"plan,omitempty"`
@@ -70,7 +72,6 @@ type ProfileDB struct {
 	StaffShiftEndTime   time.Time          `bson:"staff_shift_end_time" json:"staffShiftEndTime,omitempty"`
 	StaffVerificationId string             `bson:"staff_verification_id" json:"staffVerificationId,omitempty"`
 }
-
 type AddressDB struct {
 	Address string `bson:"address" json:"address,omitempty"`
 	Country string `bson:"country" json:"country,omitempty"`
@@ -81,10 +82,10 @@ type AddressDB struct {
 
 type ProfileOut struct {
 	ProfileDB `json:",inline"`
-	Plan      *PlanDB     `json:"plan,omitempty"`
-	Booking   []BookingDB `json:"booking,omitempty"`
-	Wallet    []WalletS   `json:"wallet,omitempty"`
-	Station   []StationDB `json:"station,omitempty"`
+	Plan      *PlanDB     `json:"plan"`
+	Booking   []BookingDB `json:"booking"`
+	Wallet    []WalletS   `json:"wallet"`
+	Station   []StationDB `json:"station"`
 }
 
 type UserAttendance struct {

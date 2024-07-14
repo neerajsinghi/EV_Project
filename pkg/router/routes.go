@@ -193,6 +193,12 @@ var routes = Routes{
 		users.UpdateUser,
 	},
 	Route{
+		"Delete User",
+		"DELETE",
+		"/users/{id}",
+		users.DeleteUser,
+	},
+	Route{
 		"Add Bike",
 		"POST",
 		"/bike",

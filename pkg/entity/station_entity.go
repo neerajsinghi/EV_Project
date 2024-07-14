@@ -14,11 +14,6 @@ type StationDB struct {
 	Description       string             `bson:"description" json:"description,omitempty"`
 	ShortName         string             `bson:"short_name" json:"shortName,omitempty"`
 	Address           *AddressDB         `bson:"address" json:"address,omitempty"`
-	AddressString     string             `bson:"address_string" json:"addressString,omitempty"`
-	Country           string             `bson:"country" json:"country,omitempty"`
-	Pin               string             `bson:"pin" json:"pin,omitempty"`
-	City              string             `bson:"city" json:"city,omitempty"`
-	State             string             `bson:"state" json:"state,omitempty"`
 	Location          *Location          `bson:"location" json:"location,omitempty"`
 	Active            *bool              `bson:"active" json:"active,omitempty"`
 	Group             string             `bson:"group" json:"group,omitempty"`
