@@ -11,4 +11,5 @@ type Repository interface {
 	Find(filter, projection bson.M) ([]entity.Feedback, error)
 	UpdateOne(filter, update bson.M) (string, error)
 	DeleteOne(filter bson.M) error
+	Aggregate(pipeline bson.A) ([]entity.FeedbackOut, error)
 }

@@ -108,8 +108,8 @@ func CheckAndUpdateOnGoingRides() {
 		booked := entity.BookedBikesDB{
 			BookingID: booking.ID.Hex(),
 			UserID:    booking.ProfileID,
-			Bike:      *booking.BikeWithDevice,
 			OnGoing:   true,
+			Booking:   booking,
 		}
 		bookedlogic.AddBookedBike(booked)
 	}
