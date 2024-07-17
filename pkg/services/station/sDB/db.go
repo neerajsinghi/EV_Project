@@ -68,7 +68,7 @@ func (s *service) GetStation() ([]entity.StationDB, error) {
 			resp[i].Stock = new(int)
 			*resp[i].Stock = 0
 			for j := 0; j < len(bikes); j++ {
-				if bikes[j].DeviceData.Status == "online" && bikes[j].DeviceData.BatteryLevel > 20 {
+				if bikes[j].DeviceData != nil && bikes[j].DeviceData.Status == "online" && bikes[j].DeviceData.BatteryLevel > 20 {
 					*resp[i].Stock += 1
 				}
 			}
@@ -102,7 +102,7 @@ func (s *service) GetNearByStation(lat, long float64, distance int) ([]entity.St
 			resp[i].Stock = new(int)
 			*resp[i].Stock = 0
 			for j := 0; j < len(bikes); j++ {
-				if bikes[j].DeviceData.Status == "online" && bikes[j].DeviceData.BatteryLevel > 20 {
+				if bikes[j].DeviceData != nil && bikes[j].DeviceData.Status == "online" && bikes[j].DeviceData.BatteryLevel > 20 {
 					*resp[i].Stock += 1
 				}
 			}

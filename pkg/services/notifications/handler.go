@@ -24,7 +24,7 @@ func SendNotification(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = service.SendNotification(notification.Title, notification.Body, notification.UserId, notification.Token)
+	err = service.SendNotification(notification.Title, notification.Body, notification.UserId, notification.Type, notification.Token)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "unable to send notification"})
@@ -79,7 +79,7 @@ func SendMultipleNotifications(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = service.SendMultipleNotifications(notification.Title, notification.Body, notification.UserIds, notification.Tokens)
+	err = service.SendMultipleNotifications(notification.Title, notification.Body, notification.Type, notification.UserIds, notification.Tokens)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "unable to send notifications"})

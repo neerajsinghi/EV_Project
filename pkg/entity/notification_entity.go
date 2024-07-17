@@ -7,6 +7,7 @@ type Notification struct {
 	Body        string             `json:"body" bson:"body"`
 	UserId      string             `json:"userId" bson:"userId"`
 	Token       string             `json:"token" bson:"token"`
+	Type        string             `json:"type" bson:"type"`
 	CreatedTime primitive.DateTime `json:"createdTime" bson:"created_time"`
 }
 
@@ -16,5 +17,6 @@ type NotificationMulti struct {
 	Body        string             `json:"body" bson:"body"`
 	UserIds     []string           `json:"userId" bson:"userIds"`
 	Tokens      []string           `json:"token" bson:"tokens"`
+	Type        string             `json:"type" bson:"type"`
 	CreatedTime primitive.DateTime `json:"createdTime" bson:"created_time"`
 }

@@ -12,10 +12,12 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
 	commonGo "github.com/Trestx-technology/trestx-common-go-lib"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -248,4 +250,33 @@ func GetDataFromPullAPI() {
 
 type response struct {
 	Data []entity.IotBikeDB `json:"data"`
+}
+
+func CheckError(err error, w http.ResponseWriter) bool {
+	if err != nil {
+		commonGo.ECLog1(err)
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Something Went wrong"})
+		return true
+	}
+	return false
+}
+
+func SendOutput(err error, w http.ResponseWriter, data interface{}) {
+	if err != nil {
+		commonGo.ECLog1(err)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Something went wrong"})
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+}
+
+func SetOutput(w http.ResponseWriter) {
+	startTime := time.Now()
+	commonGo.DLogMap("setting brand", logrus.Fields{
+		"start_time": startTime})
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 }

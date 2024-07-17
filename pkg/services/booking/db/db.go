@@ -3,8 +3,10 @@ package db
 import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/repo/booking"
+	"bikeRental/pkg/repo/wallet"
 	db "bikeRental/pkg/services/account/dbs"
 	bookedlogic "bikeRental/pkg/services/bookedBike/logic"
+	"bikeRental/pkg/services/coupon/cdb"
 	"bikeRental/pkg/services/notifications/notify"
 	"bikeRental/pkg/services/users/udb"
 
@@ -91,7 +93,7 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	}
 	udb.ChangeServiceType(document.ProfileID, document.BookingType)
 	if userData[0].FirebaseToken != nil {
-		notify.NewService().SendNotification("Booking", "Your booking has been confirmed", document.ProfileID, *userData[0].FirebaseToken)
+		notify.NewService().SendNotification("Booking", "Your booking has been confirmed", document.ProfileID, "booking", *userData[0].FirebaseToken)
 	}
 	return repo.InsertOne(document)
 }
@@ -209,22 +211,21 @@ func (*service) GetBookingByID(id string) (*entity.BookingOut, error) {
 
 // UpdateBooking implements Booking.
 func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, error) {
+
 	set := bson.M{}
 	var devices []entity.IotBikeDB
-	var err error
+	booking, err := GetBooking(id)
+
+	if err != nil {
+		return "", err
+	}
 	deviceList := make([]int, 0)
-	deviceList = append(deviceList, document.DeviceID)
+	deviceList = append(deviceList, booking.DeviceID)
 	devices, err = bikedb.GetBike(deviceList)
 	if err != nil {
 		return "", err
 	}
-	booking, err := GetBooking(id)
-	if err != nil {
-		return "", err
-	}
-	if err != nil {
-		return "", err
-	}
+
 	if document.Status != "" {
 		set["status"] = document.Status
 	}
@@ -276,7 +277,7 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 						if p.EndingMinutes != 0 {
 							if timeBooked <= p.EndingMinutes {
 								price = p.Price
-								break
+
 							}
 							if maxPrice < p.Price {
 								maxPrice = p.Price
@@ -296,15 +297,45 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 							}
 						}
 					}
+					if booking.CouponCode != "" {
+						coupon, err := cdb.GetCouponByCode(booking.CouponCode)
+						if err == nil {
+
+							if coupon.CouponType == "discount" {
+								discount := (price * coupon.Discount / 100)
+								if discount > coupon.MaxValue {
+									discount = coupon.MaxValue
+								}
+								if discount < coupon.MinValue {
+									discount = coupon.MinValue
+								}
+								price = price - discount
+							} else if coupon.CouponType == "freeRide" {
+								if price > coupon.MaxValue {
+									price = price - coupon.MaxValue
+								} else {
+									price = 0
+								}
+							}
+						}
+					}
 					set["price"] = price
+					wall := entity.WalletS{
+						ID:          primitive.NewObjectID(),
+						UserID:      booking.ProfileID,
+						UsedMoney:   price,
+						BookingID:   id,
+						Description: "Booking",
+					}
+					wallet.NewRepository("wallet").InsertOne(wall)
 				}
 				udb.ChangeServiceType(document.ProfileID, "")
 				userData, err := db.GetUser([]string{booking.ProfileID})
-				if err == nil && len(userData) > 0 {
+				if err == nil && len(userData) <= 0 {
 					return "", errors.New("user already has a booking")
 				}
 				if userData[0].FirebaseToken != nil {
-					notify.NewService().SendNotification("Booking", "Your booking has been confirmed", booking.ProfileID, *userData[0].FirebaseToken)
+					notify.NewService().SendNotification("Booking", "Your booking has been completed", booking.ProfileID, "booking", *userData[0].FirebaseToken)
 				}
 
 			}

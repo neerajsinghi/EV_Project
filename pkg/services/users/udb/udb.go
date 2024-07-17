@@ -6,6 +6,7 @@ import (
 	"bikeRental/pkg/services/notifications/notify"
 	pdb "bikeRental/pkg/services/plan/pDB"
 	userattendance "bikeRental/pkg/services/userAttendance"
+	"errors"
 	"strconv"
 	"time"
 
@@ -103,6 +104,11 @@ func (s *service) GetUsers(userType string) ([]entity.ProfileOut, error) {
 func createPipeline(filter bson.M) bson.A {
 	pipeline := bson.A{
 		bson.D{{Key: "$match", Value: filter}},
+		bson.D{
+			{
+				Key: "$sort", Value: bson.D{{Key: "created_time", Value: -1}},
+			},
+		},
 		bson.D{{Key: "$addFields", Value: bson.D{
 			{Key: "userStringId", Value: bson.D{{Key: "$toString", Value: "$_id"}}},
 		}}},
@@ -205,13 +211,13 @@ func (s *service) UpdateUser(id string, user entity.ProfileDB) (string, error) {
 	if user.IDVerified != nil {
 		set["id_verified"] = *user.IDVerified
 		if *user.IDVerified && userN.FirebaseToken != nil {
-			notify.NewService().SendNotification("ID Verified", "Your ID has been verified", userN.ID.Hex(), *userN.FirebaseToken)
+			notify.NewService().SendNotification("ID Verified", "Your ID has been verified", userN.ID.Hex(), "idVerified", *userN.FirebaseToken)
 		}
 	}
 	if user.DLVerified != nil {
 		set["dl_verified"] = *user.DLVerified
 		if *user.DLVerified && userN.FirebaseToken != nil {
-			notify.NewService().SendNotification("DL Verified", "Your DL has been verified", userN.ID.Hex(), *userN.FirebaseToken)
+			notify.NewService().SendNotification("DL Verified", "Your DL has been verified", userN.ID.Hex(), "idVerified", *userN.FirebaseToken)
 		}
 	}
 	if user.Gender != nil && *user.Gender != "" {
@@ -252,6 +258,7 @@ func (s *service) UpdateUser(id string, user entity.ProfileDB) (string, error) {
 		set["plan_active"] = true
 		set["plan_start_time"] = time.Now().Unix()
 		set["plan_end_time"] = planEnd
+		set["service_type"] = plan.Type
 	}
 	if user.StaffStatus != "" {
 		set["staff_status"] = user.StaffStatus
@@ -274,7 +281,30 @@ func (s *service) DeleteUser(id string) (string, error) {
 	filter := bson.M{"_id": idObject}
 	return repo.UpdateOne(filter, bson.M{"$set": bson.M{"status": "deleted"}})
 }
-
+func (s *service) DeleteUserPermanently(id string) error {
+	idObject, _ := primitive.ObjectIDFromHex(id)
+	filter := bson.M{"_id": idObject}
+	return repo.DeleteOne(filter)
+}
+func (s *service) RemovePlan(id, planID string) (string, error) {
+	idObject, _ := primitive.ObjectIDFromHex(id)
+	filter := bson.M{"_id": idObject}
+	user, err := s.GetUserById(id)
+	if err != nil {
+		return "", err
+	}
+	if user.PlanID != nil && *user.PlanID != planID {
+		return "", errors.New("plan not found")
+	}
+	set := bson.M{}
+	set["plan_id"] = ""
+	set["plan"] = nil
+	set["service_type"] = ""
+	set["plan_active"] = false
+	set["plan_start_time"] = 0
+	set["plan_end_time"] = 0
+	return repo.UpdateOne(filter, bson.M{"$set": set})
+}
 func ChangeServiceType(id string, serviceType string) (string, error) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
 	filter := bson.M{"_id": idObject}

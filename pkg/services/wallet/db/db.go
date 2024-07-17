@@ -60,6 +60,10 @@ func (s *service) InsertOne(document entity.WalletS) (WalletTotal, error) {
 			return WalletTotal{}, err
 		}
 		document.Plan = &plan
+		profile := entity.ProfileDB{
+			PlanID: &document.PlanID,
+		}
+		udb.NewService().UpdateUser(document.UserID, profile)
 	}
 	document.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
 
@@ -71,7 +75,7 @@ func (s *service) InsertOne(document entity.WalletS) (WalletTotal, error) {
 	if document.RefundedMoney != 0 {
 		if user.FirebaseToken != nil {
 			refund := strconv.FormatFloat(document.RefundedMoney, 'f', -1, 64)
-			notify.NewService().SendNotification("Refund", "Refund of "+refund+" has been credited to your wallet", document.UserID, *user.FirebaseToken)
+			notify.NewService().SendNotification("Refund", "Refund of "+refund+" has been credited to your wallet", document.UserID, "refund", *user.FirebaseToken)
 		}
 	}
 	return getWalletTotal(document.UserID)

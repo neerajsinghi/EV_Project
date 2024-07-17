@@ -16,17 +16,18 @@ func NewService() Notify {
 }
 
 // SendNotification implements Notify.
-func (s *str) SendNotification(title string, body string, userId string, token string) error {
+func (s *str) SendNotification(title string, body string, userId string, token, ntype string) error {
 	utils.SendNotification(title, body, token)
 	_, err := repo.InsertOne(entity.Notification{
 		Title:  title,
 		Body:   body,
 		UserId: userId,
 		Token:  token,
+		Type:   ntype,
 	})
 	return err
 }
-func (s *str) SendMultipleNotifications(title string, body string, userIds []string, tokens []string) error {
+func (s *str) SendMultipleNotifications(title, body, ntype string, userIds []string, tokens []string) error {
 	if len(userIds) != len(tokens) {
 		return errors.New("userIds and tokens must have the same length")
 	}
@@ -37,6 +38,7 @@ func (s *str) SendMultipleNotifications(title string, body string, userIds []str
 			Body:   body,
 			UserId: userIds[i],
 			Token:  tokens[i],
+			Type:   ntype,
 		})
 		if err != nil {
 			return err

@@ -3,92 +3,40 @@ package users
 import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/services/users/udb"
+	utils "bikeRental/pkg/util"
 	"encoding/json"
 	"net/http"
-	"time"
 
-	trestCommon "github.com/Trestx-technology/trestx-common-go-lib"
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 var service = udb.NewService()
 
 func GetUsers(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	defer func() {
-		trestCommon.DLogMap("brand updated", logrus.Fields{
-			"duration": time.Since(startTime),
-		})
-	}()
-	trestCommon.DLogMap("setting brand", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	userType := r.URL.Query().Get("type")
 	data, err := service.GetUsers(userType)
-	if err != nil {
-		trestCommon.ECLog1(err)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to get plan"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+	utils.SendOutput(err, w, data)
 }
 
 func GetUserById(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	defer func() {
-		trestCommon.DLogMap("brand updated", logrus.Fields{
-			"duration": time.Since(startTime),
-		})
-	}()
-	trestCommon.DLogMap("setting brand", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	data, err := service.GetUserById(id)
-	if err != nil {
-		trestCommon.ECLog1(err)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to get plan"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+	utils.SendOutput(err, w, data)
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	defer func() {
-		trestCommon.DLogMap("brand updated", logrus.Fields{
-			"duration": time.Since(startTime),
-		})
-	}()
-	trestCommon.DLogMap("setting brand", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	user, err := getUser(r)
-	if err != nil {
-		trestCommon.ECLog1(err)
-		w.WriteHeader(http.StatusUnsupportedMediaType)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Something Went wrong"})
+	shouldReturn := utils.CheckError(err, w)
+	if shouldReturn {
 		return
 	}
 	data, err := service.UpdateUser(id, user)
-	if err != nil {
-		trestCommon.ECLog1(err)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to update user"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+	utils.SendOutput(err, w, data)
+
 }
 
 func getUser(r *http.Request) (entity.ProfileDB, error) {
@@ -101,24 +49,23 @@ func getUser(r *http.Request) (entity.ProfileDB, error) {
 }
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	defer func() {
-		trestCommon.DLogMap("brand updated", logrus.Fields{
-			"duration": time.Since(startTime),
-		})
-	}()
-	trestCommon.DLogMap("setting brand", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	_, err := service.DeleteUser(id)
-	if err != nil {
-		trestCommon.ECLog1(err)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to delete user"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": ""})
+	utils.SendOutput(err, w, nil)
+}
+
+func DeleteUserPermanently(w http.ResponseWriter, r *http.Request) {
+	utils.SetOutput(w)
+	id := mux.Vars(r)["id"]
+	err := service.DeleteUserPermanently(id)
+	utils.SendOutput(err, w, nil)
+}
+
+func RemovePlan(w http.ResponseWriter, r *http.Request) {
+	utils.SetOutput(w)
+	id := mux.Vars(r)["id"]
+	planID := mux.Vars(r)["plan_id"]
+	data, err := service.RemovePlan(id, planID)
+	utils.SendOutput(err, w, data)
 }

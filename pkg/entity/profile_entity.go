@@ -82,7 +82,6 @@ type AddressDB struct {
 
 type ProfileOut struct {
 	ProfileDB `json:",inline"`
-	Plan      *PlanDB     `json:"plan"`
 	Booking   []BookingDB `json:"booking"`
 	Wallet    []WalletS   `json:"wallet"`
 	Station   []StationDB `json:"station"`

@@ -199,6 +199,18 @@ var routes = Routes{
 		users.DeleteUser,
 	},
 	Route{
+		"Delete User",
+		"DELETE",
+		"/users/permanent/{id}",
+		users.DeleteUserPermanently,
+	},
+	Route{
+		"Remove Plan",
+		"PATCH",
+		"/users/{id}/plan/{plan_id}",
+		users.RemovePlan,
+	},
+	Route{
 		"Add Bike",
 		"POST",
 		"/bike",
