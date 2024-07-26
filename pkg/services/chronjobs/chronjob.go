@@ -8,6 +8,7 @@ import (
 	"bikeRental/pkg/services/motog"
 	"bikeRental/pkg/services/notifications/notify"
 	pdb "bikeRental/pkg/services/plan/pDB"
+	predefnotification "bikeRental/pkg/services/predefNotification"
 	wdb "bikeRental/pkg/services/wallet/db"
 	"fmt"
 	"sort"
@@ -43,7 +44,10 @@ func CheckBooking() {
 		if err != nil || city.Name != booking.City {
 			fmt.Println(err)
 			if booking.Profile.FirebaseToken != nil {
-				notify.NewService().SendNotification("Left premises", "Your bike is going out of premise", booking.Profile.ID.Hex(), "leavingPremise", *booking.Profile.FirebaseToken)
+				predef, err := predefnotification.Get("outOfGeofence")
+				if err == nil && predef.Name == "outOfGeofence" {
+					notify.NewService().SendNotification(predef.Title, predef.Body, booking.Profile.ID.Hex(), predef.Type, *booking.Profile.FirebaseToken)
+				}
 			}
 			if booking.BikeWithDevice.Type == "moto" {
 				motog.ImmoblizeDevice(1, booking.BikeWithDevice.Name)
@@ -78,16 +82,22 @@ func CheckBooking() {
 		}
 
 		bdb.AddTimeRemaining(booking.ID.Hex(), timeSpent-int(time.Now().Unix()/60)+int(booking.StartTime/60))
-
-		if int(time.Now().Unix()/60)-int(booking.StartTime/60) <= (timeSpent-10) && int(time.Now().Unix()/60)-int(booking.StartTime/60) >= timeSpent-9 {
+		totalRideTime := int(time.Now().Unix()/60) - int(booking.StartTime/60)
+		if totalRideTime == (timeSpent - 10) {
 			if booking.Profile.FirebaseToken != nil {
-				notify.NewService().SendNotification("Time Expiring", "Your booking time will Expire In 10 minutes Please recharge your wallet", booking.Profile.ID.Hex(), "timeExpiring", *booking.Profile.FirebaseToken)
+				predef, err := predefnotification.Get("lastTenMinutes")
+				if err == nil && predef.Name == "lastTenMinutes" {
+					notify.NewService().SendNotification(predef.Title, predef.Body, booking.Profile.ID.Hex(), predef.Type, *booking.Profile.FirebaseToken)
+				}
 			}
 
 		}
-		if timeSpent <= int(time.Now().Unix()/60)-int(booking.StartTime/60) {
+		if timeSpent <= totalRideTime {
 			if booking.Profile.FirebaseToken != nil {
-				notify.NewService().SendNotification("Time Expired", "Your booking time expired we will be stopping the bike", booking.Profile.ID.Hex(), "timeExpiring", *booking.Profile.FirebaseToken)
+				predef, err := predefnotification.Get("timeExpired")
+				if err == nil && predef.Name == "timeExpired" {
+					notify.NewService().SendNotification(predef.Title, predef.Body, booking.Profile.ID.Hex(), predef.Type, *booking.Profile.FirebaseToken)
+				}
 			}
 
 			//use money from wallet

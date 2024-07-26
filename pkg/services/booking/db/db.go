@@ -9,6 +9,7 @@ import (
 	"bikeRental/pkg/services/coupon/cdb"
 	"bikeRental/pkg/services/motog"
 	"bikeRental/pkg/services/notifications/notify"
+	predefnotification "bikeRental/pkg/services/predefNotification"
 	"bikeRental/pkg/services/users/udb"
 	wdb "bikeRental/pkg/services/walletInt/db"
 	"fmt"
@@ -137,7 +138,10 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	}
 	udb.ChangeServiceType(document.ProfileID, document.BookingType)
 	if userData[0].FirebaseToken != nil {
-		notify.NewService().SendNotification("Booking", "Your booking has been confirmed", document.ProfileID, "booking", *userData[0].FirebaseToken)
+		predef, err := predefnotification.Get("bookingStarted")
+		if err == nil && predef.Name == "bookingStarted" {
+			notify.NewService().SendNotification(predef.Title, predef.Body, document.ProfileID, predef.Type, *userData[0].FirebaseToken)
+		}
 	}
 	return repo.InsertOne(document)
 }
@@ -384,7 +388,10 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 					return "", errors.New("user already has a booking")
 				}
 				if userData[0].FirebaseToken != nil {
-					notify.NewService().SendNotification("Booking", "Your booking has been completed", booking.ProfileID, "booking", *userData[0].FirebaseToken)
+					predef, err := predefnotification.Get("bookingCompleted")
+					if err == nil && predef.Name == "bookingCompleted" {
+						notify.NewService().SendNotification(predef.Title, predef.Body, booking.ProfileID, predef.Type, *userData[0].FirebaseToken)
+					}
 				}
 				set["status"] = document.Status
 			}

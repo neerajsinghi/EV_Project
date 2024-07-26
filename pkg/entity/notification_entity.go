@@ -20,3 +20,10 @@ type NotificationMulti struct {
 	Type        string             `json:"type" bson:"type"`
 	CreatedTime primitive.DateTime `json:"createdTime" bson:"created_time"`
 }
+
+type PreDefNotification struct {
+	Name  string `json:"name" bson:"name"`
+	Title string `json:"title" bson:"title"`
+	Body  string `json:"body" bson:"body"`
+	Type  string `json:"type" bson:"type"`
+}
