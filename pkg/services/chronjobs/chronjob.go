@@ -127,10 +127,24 @@ func CheckAndUpdateOnGoingRides() {
 	}
 	for _, booking := range bookings {
 		booked := entity.BookedBikesDB{
-			BookingID: booking.ID.Hex(),
-			UserID:    booking.ProfileID,
-			OnGoing:   true,
-			Booking:   booking,
+			BookingID:   booking.ID.Hex(),
+			UserID:      booking.ProfileID,
+			OnGoing:     true,
+			Booking:     booking,
+			Coordinates: booking.BikeWithDevice.Location.Coordinates[1],
+		}
+		if booking.StartingStation != nil {
+			booked.StartingStation = booking.StartingStation.Name
+		}
+		if booking.EndingStation != nil {
+			booked.EndStation = booking.EndingStation.Name
+		}
+		if booking.Profile != nil {
+			booked.UserName = booking.Profile.Name
+		}
+		if booking.BikeWithDevice != nil {
+			booked.DeviceName = booking.BikeWithDevice.Name
+			booked.DeviceId = booking.BikeWithDevice.DeviceId
 		}
 		bookedlogic.AddBookedBike(booked)
 	}
