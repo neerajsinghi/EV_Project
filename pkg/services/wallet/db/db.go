@@ -4,9 +4,14 @@ import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/repo/wallet"
 	bookingDB "bikeRental/pkg/services/booking/db"
+	"bikeRental/pkg/services/city"
+	"bikeRental/pkg/services/motog"
 	"bikeRental/pkg/services/notifications/notify"
 	pdb "bikeRental/pkg/services/plan/pDB"
+	predefnotification "bikeRental/pkg/services/predefNotification"
 	"bikeRental/pkg/services/users/udb"
+	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -78,6 +83,9 @@ func (s *service) InsertOne(document entity.WalletS) (WalletTotal, error) {
 			notify.NewService().SendNotification("Refund", "Refund of "+refund+" has been credited to your wallet", document.UserID, "refund", *user.FirebaseToken)
 		}
 	}
+	if document.DepositedMoney > 0 && document.PaymentID != "" {
+		s.CheckMyBooking(document.UserID)
+	}
 	return getWalletTotal(document.UserID)
 }
 
@@ -131,4 +139,77 @@ func getWalletTotalAll() ([]WalletTotal, error) {
 		walletList = append(walletList, v)
 	}
 	return walletList, nil
+}
+
+func (w *service) CheckMyBooking(userId string) {
+	booking, err := bookingDB.NewService().GetMyLatestBooking(userId)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	planList, err := pdb.NewService().GetPlans("hourly", booking.City)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	wallet, err := w.FindMy(booking.ProfileID)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	timeSpent := 0
+	walletAmount := wallet.TotalBalance
+	extendedPrice := 0.0
+	extendedTime := 0
+	city, err := city.InCity(booking.BikeWithDevice.Location.Coordinates[1], booking.BikeWithDevice.Location.Coordinates[0])
+	if err != nil || city.Name != booking.City {
+		fmt.Println(err)
+		if booking.Profile.FirebaseToken != nil {
+			predef, err := predefnotification.Get("outOfGeofence")
+			if err == nil && predef.Name == "outOfGeofence" {
+				notify.NewService().SendNotification(predef.Title, predef.Body, booking.Profile.ID.Hex(), predef.Type, *booking.Profile.FirebaseToken)
+			}
+		}
+		if booking.BikeWithDevice.Type == "moto" {
+			motog.ImmoblizeDevice(1, booking.BikeWithDevice.Name)
+		}
+	}
+	sort.Slice(planList, func(i, j int) bool {
+		return planList[i].EndingMinutes < planList[j].EndingMinutes
+	})
+	for i, plan := range planList {
+		if plan.EndingMinutes != 0 {
+			if walletAmount == plan.Price {
+				// Calculate the time this plan can provide
+
+				// Add the time to the total timeSpent
+				timeSpent = plan.EndingMinutes
+				// Deduct the plan's price from the wallet
+
+				walletAmount -= plan.Price
+
+				break
+
+			} else if i > 0 && (planList[i-1].Price < walletAmount && walletAmount < plan.Price) {
+				timeSpent = planList[i-1].EndingMinutes
+				walletAmount -= planList[i-1].Price
+				break
+			}
+		} else if plan.EveryXMinutes != 0 {
+			extendedPrice = plan.Price
+			extendedTime = plan.EveryXMinutes
+		}
+	}
+	if walletAmount > 0 {
+		timeEx := int(walletAmount/extendedPrice) * extendedTime
+		if timeEx >= 1 {
+			timeSpent += timeEx
+			walletAmount -= float64(timeSpent/extendedTime) * (extendedPrice)
+		}
+	}
+
+	bookingDB.AddTimeRemaining(booking.ID.Hex(), timeSpent-int(time.Now().Unix()/60)+int(booking.StartTime/60))
+
 }

@@ -56,9 +56,9 @@ func CheckBooking() {
 		sort.Slice(planList, func(i, j int) bool {
 			return planList[i].EndingMinutes < planList[j].EndingMinutes
 		})
-		for _, plan := range planList {
+		for i, plan := range planList {
 			if plan.EndingMinutes != 0 {
-				if walletAmount <= plan.Price {
+				if walletAmount == plan.Price {
 					// Calculate the time this plan can provide
 
 					// Add the time to the total timeSpent
@@ -67,18 +67,24 @@ func CheckBooking() {
 
 					walletAmount -= plan.Price
 
-					// If there's no money left, stop iterating
-					if walletAmount <= 0 {
-						break
-					}
+					break
+
+				} else if i > 0 && (planList[i-1].Price < walletAmount && walletAmount < plan.Price) {
+					timeSpent = planList[i-1].EndingMinutes
+					walletAmount -= planList[i-1].Price
+					break
 				}
-			} else {
+			} else if plan.EveryXMinutes != 0 {
 				extendedPrice = plan.Price
 				extendedTime = plan.EveryXMinutes
 			}
 		}
 		if walletAmount > 0 {
-			timeSpent += int(walletAmount/extendedPrice) * extendedTime
+			timeEx := int(walletAmount/extendedPrice) * extendedTime
+			if timeEx >= 1 {
+				timeSpent += timeEx
+				walletAmount -= float64(timeSpent/extendedTime) * (extendedPrice)
+			}
 		}
 
 		bdb.AddTimeRemaining(booking.ID.Hex(), timeSpent-int(time.Now().Unix()/60)+int(booking.StartTime/60))
@@ -104,7 +110,7 @@ func CheckBooking() {
 			walletN := &entity.WalletS{
 				ID:          primitive.NewObjectID(),
 				UserID:      booking.ProfileID,
-				UsedMoney:   wallet.TotalBalance,
+				UsedMoney:   wallet.TotalBalance - walletAmount,
 				BookingID:   booking.ID.Hex(),
 				Description: "Time expired for booking",
 			}

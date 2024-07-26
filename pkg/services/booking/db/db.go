@@ -323,6 +323,8 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 					price := float64(0)
 					maxPrice := float64(0)
 					maxTime := 0
+					extendedPrice := 0.0
+					extendedTime := 0
 					sort.Slice(plan, func(i, j int) bool {
 						return plan[i].EndingMinutes < plan[j].EndingMinutes
 					})
@@ -338,16 +340,17 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 							if maxTime < p.EndingMinutes {
 								maxTime = p.EndingMinutes
 							}
+						} else if p.EveryXMinutes != 0 {
+							extendedPrice = p.Price
+							extendedTime = p.EveryXMinutes
 						}
 					}
 					if price == 0 {
 						price = maxPrice
 						timeBooked -= maxTime
-						for _, p := range plan {
-							if p.EndingMinutes == 0 {
-								timeMultiplier := float64(timeBooked / p.EveryXMinutes)
-								price += p.Price * timeMultiplier
-							}
+						for timeBooked > 0 {
+							price += extendedPrice
+							timeBooked -= extendedTime
 						}
 					}
 					if booking.CouponCode != "" {
