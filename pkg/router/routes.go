@@ -13,7 +13,6 @@ import (
 	iotbike "bikeRental/pkg/services/iotBike"
 	"bikeRental/pkg/services/notifications"
 	"bikeRental/pkg/services/plan"
-	predefnotification "bikeRental/pkg/services/predefNotification"
 	"bikeRental/pkg/services/reffer"
 	"bikeRental/pkg/services/services"
 	"bikeRental/pkg/services/station"
@@ -511,30 +510,6 @@ var routes = Routes{
 		"GET",
 		"/attendance/{id}",
 		userattendance.GetUserAttendanceByIDHandler,
-	},
-	Route{
-		"get all notification templates",
-		"GET",
-		"/templates/notification",
-		predefnotification.GetPredef,
-	},
-	Route{
-		"add notification template",
-		"POST",
-		"/templates/notification",
-		predefnotification.AddPredef,
-	},
-	Route{
-		"update notification template",
-		"PATCH",
-		"/templates/notification",
-		predefnotification.UpdatePredef,
-	},
-	Route{
-		"delete notification template",
-		"DELETE",
-		"/templates/notification",
-		predefnotification.DeletePredef,
 	},
 }
 

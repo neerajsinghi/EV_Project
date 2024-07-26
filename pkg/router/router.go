@@ -9,12 +9,17 @@ func NewRouter() *mux.Router {
 	router.Use(Logger)
 	//Path
 	sub := router.PathPrefix("/api/v1").Subrouter()
+	addRoutes(sub, routes)
+	addRoutes(sub, templateRoutes)
+
+	return router
+}
+
+func addRoutes(sub *mux.Router, routes Routes) {
 	for _, route := range routes {
 		sub.
 			HandleFunc(route.Pattern, route.HandlerFunc).
 			Name(route.Name).
 			Methods(route.Method)
 	}
-
-	return router
 }
