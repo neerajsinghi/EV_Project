@@ -10,8 +10,27 @@ func NewRouter() *mux.Router {
 	//Path
 	sub := router.PathPrefix("/api/v1").Subrouter()
 	addRoutes(sub, routes)
-	addRoutes(sub, templateRoutes)
-
+	addRoutes(sub, AccountRoutes)
+	addRoutes(sub, BikeDeviceRoutes)
+	addRoutes(sub, BookedbikeRoutes)
+	addRoutes(sub, BookingRoutes)
+	addRoutes(sub, ChargerRoutes)
+	addRoutes(sub, CityRoutes)
+	addRoutes(sub, CouponRoutes)
+	addRoutes(sub, FAQRoutes)
+	addRoutes(sub, FeedbackRoutes)
+	addRoutes(sub, IotBikeRoutes)
+	addRoutes(sub, NotificationsRoutes)
+	addRoutes(sub, PlanRoutes)
+	addRoutes(sub, PredefNotificationRoutes)
+	addRoutes(sub, RefferRoutes)
+	addRoutes(sub, ServicesRoutes)
+	addRoutes(sub, StationRoutes)
+	addRoutes(sub, StatusRoutes)
+	addRoutes(sub, UserAttendanceRoutes)
+	addRoutes(sub, UsersRoutes)
+	addRoutes(sub, VehicleTypeRoutes)
+	addRoutes(sub, WalletRoutes)
 	return router
 }
 

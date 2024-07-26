@@ -1,0 +1,24 @@
+package router
+
+import wallet "bikeRental/pkg/services/wallet"
+
+var WalletRoutes = Routes{
+	Route{
+		"Add Wallet",
+		"POST",
+		"/wallet",
+		wallet.AddWallet,
+	},
+	Route{
+		"Get Wallet",
+		"GET",
+		"/wallet/{id}",
+		wallet.GetMyWallet,
+	},
+	Route{
+		"Get Wallet All",
+		"GET",
+		"/wallet",
+		wallet.GetAllWallets,
+	},
+}
