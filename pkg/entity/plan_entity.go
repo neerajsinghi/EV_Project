@@ -14,8 +14,10 @@ type PlanDB struct {
 	EndingMinutes   int                `bson:"ending_minutes" json:"endingMinutes"`
 	EveryXMinutes   int                `bson:"every_x_minutes" json:"everyXMinutes"`
 	Price           float64            `bson:"price" json:"price"`
+	Deposit         *float64           `bson:"deposit" json:"deposit"`
 	Validity        string             `bson:"validity" json:"validity"`
 	Discount        float64            `bson:"discount" json:"discount"`
 	IsActive        *bool              `bson:"is_active" json:"isActive"`
+	Status          string             `bson:"status" json:"status"`
 	CreatedTime     primitive.DateTime `bson:"created_time" json:"createdTime"`
 }

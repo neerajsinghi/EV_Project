@@ -1,6 +1,10 @@
 package entity
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type CouponDB struct {
 	ID             primitive.ObjectID `json:"id" bson:"_id"`
@@ -13,8 +17,8 @@ type CouponDB struct {
 	MaxValue       float64            `json:"maxValue" bson:"max_value"`
 	MaxUsageByUser int                `json:"maxUsageByUser" bson:"max_usage_by_user"`
 	Discount       float64            `json:"discount" bson:"discount"`
-	ValidityFrom   string             `json:"validFrom" bson:"valid_from"`
-	ValidTill      string             `json:"validTill" bson:"valid_till"`
+	ValidityFrom   time.Time          `json:"validFrom" bson:"valid_from"`
+	ValidTill      time.Time          `json:"validTill" bson:"valid_till"`
 	Description    string             `json:"description" bson:"description"`
 	CreatedTime    primitive.DateTime `json:"createdTime" bson:"created_time"`
 }

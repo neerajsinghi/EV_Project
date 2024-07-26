@@ -27,6 +27,36 @@ func (s *service) AddPlan(plan entity.PlanDB) (string, error) {
 	if plan.Price == 0 {
 		return "", errors.New("price is required")
 	}
+	if plan.Type == "" {
+		return "", errors.New("type is required")
+	}
+	if plan.Type == entity.Hourly {
+		dat, err := s.GetPlans("hourly", plan.City)
+		if err == nil && len(dat) > 0 {
+			for _, v := range dat {
+				if dat[0].IsActive != nil && *dat[0].IsActive && v.VehicleType == plan.VehicleType {
+					if plan.EveryXMinutes == 0 && v.EveryXMinutes == 0 && ((plan.Deposit == nil || *plan.Deposit == 0) && (v.Deposit == nil || *v.Deposit == 0)) {
+						if plan.StartingMinutes != 0 && (plan.StartingMinutes > v.StartingMinutes && plan.StartingMinutes < v.EndingMinutes) || (plan.EndingMinutes > v.StartingMinutes && plan.EndingMinutes < v.EndingMinutes) || (plan.StartingMinutes <= v.StartingMinutes && plan.EndingMinutes >= v.EndingMinutes) {
+							return "", errors.New("hourly plan already exist for this city")
+						}
+						if plan.StartingMinutes == 0 && plan.EndingMinutes == 0 {
+							return "", errors.New("hourly plan already exist for this city")
+						}
+						if plan.StartingMinutes == 0 && v.StartingMinutes == 0 {
+							return "", errors.New("hourly plan already exist for this city")
+						}
+					}
+					if plan.Deposit != nil && v.Deposit != nil {
+						return "", errors.New("hourly plan already exist for this city")
+					}
+					if plan.EveryXMinutes != 0 && v.EveryXMinutes != 0 {
+						return "", errors.New("hourly plan already exist for this city")
+					}
+				}
+			}
+		}
+	}
+
 	plan.IsActive = new(bool)
 	*plan.IsActive = true
 	return repo.InsertOne(plan)
@@ -95,6 +125,9 @@ func (s *service) UpdatePlan(id string, plan entity.PlanDB) (string, error) {
 	}
 	if plan.VehicleType != "" {
 		set["vehicle_type"] = plan.VehicleType
+	}
+	if plan.Deposit != nil {
+		set["deposit"] = *plan.Deposit
 	}
 
 	set["updated_at"] = primitive.NewDateTimeFromTime(time.Now())

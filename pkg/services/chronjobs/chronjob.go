@@ -5,11 +5,12 @@ import (
 	bookedlogic "bikeRental/pkg/services/bookedBike/logic"
 	bdb "bikeRental/pkg/services/booking/db"
 	"bikeRental/pkg/services/city"
+	"bikeRental/pkg/services/motog"
 	"bikeRental/pkg/services/notifications/notify"
 	pdb "bikeRental/pkg/services/plan/pDB"
-	"bikeRental/pkg/services/wallet/db"
 	wdb "bikeRental/pkg/services/wallet/db"
 	"fmt"
+	"sort"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -44,7 +45,13 @@ func CheckBooking() {
 			if booking.Profile.FirebaseToken != nil {
 				notify.NewService().SendNotification("Left premises", "Your bike is going out of premise", booking.Profile.ID.Hex(), "leavingPremise", *booking.Profile.FirebaseToken)
 			}
+			if booking.BikeWithDevice.Type == "moto" {
+				motog.ImmoblizeDevice(1, booking.BikeWithDevice.Name)
+			}
 		}
+		sort.Slice(planList, func(i, j int) bool {
+			return planList[i].EndingMinutes < planList[j].EndingMinutes
+		})
 		for _, plan := range planList {
 			if plan.EndingMinutes != 0 {
 				if walletAmount <= plan.Price {
@@ -53,10 +60,11 @@ func CheckBooking() {
 					// Add the time to the total timeSpent
 					timeSpent = plan.EndingMinutes
 					// Deduct the plan's price from the wallet
+
 					walletAmount -= plan.Price
 
 					// If there's no money left, stop iterating
-					if wallet.TotalBalance <= 0 {
+					if walletAmount <= 0 {
 						break
 					}
 				}
@@ -68,6 +76,9 @@ func CheckBooking() {
 		if walletAmount > 0 {
 			timeSpent += int(walletAmount/extendedPrice) * extendedTime
 		}
+
+		bdb.AddTimeRemaining(booking.ID.Hex(), timeSpent-int(time.Now().Unix()/60)+int(booking.StartTime/60))
+
 		if int(time.Now().Unix()/60)-int(booking.StartTime/60) <= (timeSpent-10) && int(time.Now().Unix()/60)-int(booking.StartTime/60) >= timeSpent-9 {
 			if booking.Profile.FirebaseToken != nil {
 				notify.NewService().SendNotification("Time Expiring", "Your booking time will Expire In 10 minutes Please recharge your wallet", booking.Profile.ID.Hex(), "timeExpiring", *booking.Profile.FirebaseToken)
@@ -80,19 +91,19 @@ func CheckBooking() {
 			}
 
 			//use money from wallet
-			wallet := &entity.WalletS{
+			walletN := &entity.WalletS{
 				ID:          primitive.NewObjectID(),
 				UserID:      booking.ProfileID,
 				UsedMoney:   wallet.TotalBalance,
 				BookingID:   booking.ID.Hex(),
 				Description: "Time expired for booking",
 			}
-			db.NewService().InsertOne(*wallet)
-			//stop booking
-			booking := entity.BookingDB{
-				Status: "stopped",
+			wdb.NewService().InsertOne(*walletN)
+			if booking.BikeWithDevice.Type == "moto" {
+				motog.ImmoblizeDevice(1, booking.BikeWithDevice.Name)
 			}
-			bdb.NewService().UpdateBooking(booking.ID.Hex(), booking)
+			//stop booking
+			bdb.ChangeStatusStopped(booking.ID.Hex(), wallet.TotalBalance, time.Now().Unix())
 		}
 	}
 
@@ -115,5 +126,5 @@ func CheckAndUpdateOnGoingRides() {
 	}
 }
 func AddMoneyToWallet(wallet entity.WalletS) {
-	db.NewService().InsertOne(wallet)
+	wdb.NewService().InsertOne(wallet)
 }

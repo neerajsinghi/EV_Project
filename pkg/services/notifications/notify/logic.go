@@ -16,7 +16,7 @@ func NewService() Notify {
 }
 
 // SendNotification implements Notify.
-func (s *str) SendNotification(title string, body string, userId string, token, ntype string) error {
+func (s *str) SendNotification(title string, body string, userId string, ntype, token string) error {
 	utils.SendNotification(title, body, token)
 	_, err := repo.InsertOne(entity.Notification{
 		Title:  title,

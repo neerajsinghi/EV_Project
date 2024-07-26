@@ -14,7 +14,7 @@ func AddBookedBike(document entity.BookedBikesDB) (string, error) {
 }
 
 func GetBookedBike(userID, bookingID string) ([]entity.BookedBikesDB, error) {
-	filter := bson.M{"on_going": true}
+	filter := bson.M{}
 
 	if userID != "" {
 		filter["user_id"] = userID

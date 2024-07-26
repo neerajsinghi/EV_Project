@@ -3,6 +3,7 @@ package booking
 import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/services/booking/db"
+	"bikeRental/pkg/services/chronjobs"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -42,6 +43,7 @@ func Book(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+	chronjobs.CheckBooking()
 	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
 }
 

@@ -31,6 +31,7 @@ type BookingDB struct {
 	GreenPoints         int64              `bson:"green_points" json:"greenPoints"`
 	CarbonSaved         float64            `bson:"carbon_saved" json:"carbonSaved"`
 	City                string             `bson:"city" json:"city"`
+	RideTimeRemaining   int                `bson:"ride_time_remaining" json:"rideTimeRemaining,omitempty"`
 }
 type Return struct {
 	Location      string   `bson:"location" json:"location"`

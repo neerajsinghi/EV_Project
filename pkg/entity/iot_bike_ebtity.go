@@ -2,7 +2,7 @@ package entity
 
 type IotBikeDB struct {
 	Alarm                    string   `bson:"alarm" json:"alarm"`
-	BatteryLevel             int      `bson:"batteryLevel" json:"batteryLevel"`
+	BatteryLevel             float64  `bson:"batteryLevel" json:"batteryLevel"`
 	Course                   string   `bson:"course" json:"course"`
 	Dealer                   string   `bson:"dealer" json:"dealer"`
 	DeviceFixTime            string   `bson:"deviceFixTime" json:"deviceFixTime"`

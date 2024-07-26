@@ -102,8 +102,8 @@ func (r *repo) FindOne(filter, projection bson.M) (entity.CouponReport, error) {
 }
 
 // not used may use in future for gettin list of profiles
-func (r *repo) Find(filter, projection bson.M) ([]entity.CouponReport, error) {
-	var profiles []entity.CouponReport
+func (r *repo) Find(filter, projection bson.M) ([]entity.CouponDB, error) {
+	var profiles []entity.CouponDB
 	cursor, err := trestCommon.FindSort(filter, projection, bson.M{"_id": -1}, 1000000, 0, r.CollectionName)
 	if err != nil {
 		trestCommon.ECLog3(
@@ -117,7 +117,7 @@ func (r *repo) Find(filter, projection bson.M) ([]entity.CouponReport, error) {
 	}
 	defer cursor.Close(context.Background())
 	for cursor.Next(context.TODO()) {
-		var profile entity.CouponReport
+		var profile entity.CouponDB
 		if err = cursor.Decode(&profile); err != nil {
 			trestCommon.ECLog3(
 				"Find profiles",

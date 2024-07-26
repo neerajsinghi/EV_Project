@@ -71,6 +71,7 @@ type ProfileDB struct {
 	StaffShiftStartTime time.Time          `bson:"staff_shift_start_time" json:"staffShiftStartTime,omitempty"`
 	StaffShiftEndTime   time.Time          `bson:"staff_shift_end_time" json:"staffShiftEndTime,omitempty"`
 	StaffVerificationId string             `bson:"staff_verification_id" json:"staffVerificationId,omitempty"`
+	Remarks             string             `bson:"remarks" json:"remarks,omitempty"`
 }
 type AddressDB struct {
 	Address string `bson:"address" json:"address,omitempty"`

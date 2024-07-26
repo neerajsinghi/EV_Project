@@ -7,8 +7,13 @@ import (
 	db "bikeRental/pkg/services/account/dbs"
 	bookedlogic "bikeRental/pkg/services/bookedBike/logic"
 	"bikeRental/pkg/services/coupon/cdb"
+	"bikeRental/pkg/services/motog"
 	"bikeRental/pkg/services/notifications/notify"
 	"bikeRental/pkg/services/users/udb"
+	wdb "bikeRental/pkg/services/walletInt/db"
+	"fmt"
+	"log"
+	"sort"
 
 	bDB "bikeRental/pkg/services/bikeDevice/db"
 	bikedb "bikeRental/pkg/services/iotBike/db"
@@ -90,6 +95,45 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	if err == nil {
 		document.Plan = &plan
 		document.City = plan.City
+		document.BookingType = string(plan.Type)
+		if plan.Type == "hourly" {
+			planList, _ := pdb.NewService().GetPlans("hourly", document.City)
+
+			wallet, err := wdb.NewService().FindMy(document.ProfileID)
+			if err != nil {
+				fmt.Println(err)
+				return "", err
+			}
+			timeSpent := 0
+			walletAmount := wallet.TotalBalance
+			extendedPrice := 0.0
+			extendedTime := 0
+			for _, plan := range planList {
+				if plan.EndingMinutes != 0 {
+					if walletAmount <= plan.Price {
+						// Calculate the time this plan can provide
+
+						// Add the time to the total timeSpent
+						timeSpent = plan.EndingMinutes
+						// Deduct the plan's price from the wallet
+						walletAmount -= plan.Price
+
+						// If there's no money left, stop iterating
+						if walletAmount <= 0 {
+							break
+						}
+					}
+				} else {
+					extendedPrice = plan.Price
+					extendedTime = plan.EveryXMinutes
+				}
+			}
+			if walletAmount > 0 {
+				timeSpent += int(walletAmount/extendedPrice) * extendedTime
+			}
+
+			document.RideTimeRemaining = timeSpent - int(time.Now().Unix()/60) + int(document.StartTime/60)
+		}
 	}
 	udb.ChangeServiceType(document.ProfileID, document.BookingType)
 	if userData[0].FirebaseToken != nil {
@@ -202,7 +246,13 @@ func (s *service) GetMyLatestBooking(userID string) (*entity.BookingOut, error) 
 	if err != nil {
 		return nil, err
 	}
-
+	if len(booking) > 1 {
+		for i := 1; i < len(booking); i++ {
+			if booking[i].Status == "started" {
+				return &booking[i], nil
+			}
+		}
+	}
 	return &booking[0], nil
 }
 func (*service) GetBookingByID(id string) (*entity.BookingOut, error) {
@@ -224,10 +274,6 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 	devices, err = bikedb.GetBike(deviceList)
 	if err != nil {
 		return "", err
-	}
-
-	if document.Status != "" {
-		set["status"] = document.Status
 	}
 
 	if document.Price != nil {
@@ -263,7 +309,7 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 			if err == nil {
 				set["ending_station"] = &station
 			}
-			bDB.DeviceReturned(document.DeviceID, document.EndingStationID)
+			bDB.DeviceReturned(booking.DeviceID, document.EndingStationID)
 			bookedlogic.ChangeOnGoing(id)
 			timeBooked := int((endTime - booking.StartTime) / 60)
 			set["time_booked"] = timeBooked
@@ -273,11 +319,14 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 					price := float64(0)
 					maxPrice := float64(0)
 					maxTime := 0
+					sort.Slice(plan, func(i, j int) bool {
+						return plan[i].EndingMinutes < plan[j].EndingMinutes
+					})
 					for _, p := range plan {
 						if p.EndingMinutes != 0 {
 							if timeBooked <= p.EndingMinutes {
 								price = p.Price
-
+								break
 							}
 							if maxPrice < p.Price {
 								maxPrice = p.Price
@@ -337,7 +386,7 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 				if userData[0].FirebaseToken != nil {
 					notify.NewService().SendNotification("Booking", "Your booking has been completed", booking.ProfileID, "booking", *userData[0].FirebaseToken)
 				}
-
+				set["status"] = document.Status
 			}
 		} else {
 			return "", errors.New("ending station not found")
@@ -347,7 +396,28 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 
 		return repo.UpdateOne(bson.M{"_id": idObject}, bson.M{"$set": set})
 	}
+	if document.Status == "resumed" && booking.Status == "stopped" {
 
+		data, err := s.AddBooking(
+			entity.BookingDB{
+				ProfileID:         booking.ProfileID,
+				DeviceID:          booking.DeviceID,
+				StartingStationID: booking.StartingStationID,
+				Plan:              booking.Plan,
+				Status:            "started",
+				BookingType:       booking.BookingType,
+				VehicleType:       booking.VehicleType,
+			},
+		)
+		if err != nil {
+			return "", err
+		}
+		if booking.BikeWithDevice.Type == "moto" {
+			motog.ImmoblizeDevice(0, booking.BikeWithDevice.Name)
+		}
+		return data, nil
+
+	}
 	return "", errors.New("status not completed")
 }
 
@@ -364,4 +434,25 @@ func GetBooking(id string) (*entity.BookingOut, error) {
 		return nil, errors.New("booking not found")
 	}
 	return &booking[0], nil
+}
+
+func AddTimeRemaining(id string, timeRemaining int) {
+	idObject, _ := primitive.ObjectIDFromHex(id)
+	filter := bson.M{"_id": idObject}
+	set := bson.M{}
+	set["ride_time_remaining"] = timeRemaining
+	set["update_time"] = time.Now()
+	repo.UpdateOne(filter, bson.M{"$set": set})
+}
+
+func ChangeStatusStopped(id string, price float64, endTime int64) {
+	idObject, _ := primitive.ObjectIDFromHex(id)
+	filter := bson.M{"_id": idObject}
+	set := bson.M{}
+	set["status"] = "stopped"
+	set["price"] = price
+	set["end_time"] = endTime
+	set["updated_time"] = primitive.NewDateTimeFromTime(time.Now())
+	_, err := repo.UpdateOne(filter, bson.M{"$set": set})
+	log.Println("error", err)
 }

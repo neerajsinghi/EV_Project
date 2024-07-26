@@ -71,7 +71,7 @@ func (*accountService) SignUp(cred Credentials) (string, error) {
 		}
 	}
 
-	return "", errors.New("email already registed")
+	return "", errors.New("phone number already registed")
 }
 
 func (*accountService) SendVerificationEmail(email, pemail, uid string) (string, error) {
@@ -143,7 +143,7 @@ func (*accountService) LoginUsingPhone(phone string) (string, error) {
 		return "", err
 	}
 	if data.Status == "deleted" {
-		return "user deleted", nil
+		return "user deleted", errors.New("user deleted")
 	}
 	code := strconv.Itoa(100000 + rand.Intn(999999-100000))
 

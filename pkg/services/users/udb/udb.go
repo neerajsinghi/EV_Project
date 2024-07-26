@@ -2,6 +2,7 @@ package udb
 
 import (
 	"bikeRental/pkg/entity"
+	"bikeRental/pkg/repo/booking"
 	"bikeRental/pkg/repo/profile"
 	"bikeRental/pkg/services/notifications/notify"
 	pdb "bikeRental/pkg/services/plan/pDB"
@@ -316,6 +317,11 @@ func ChangeServiceType(id string, serviceType string) (string, error) {
 func RemovePlan(userId string) (string, error) {
 	idObject, _ := primitive.ObjectIDFromHex(userId)
 	filter := bson.M{"_id": idObject}
+
+	booking, err := booking.NewRepository("booking").FindOne(bson.M{"profile_id": userId, "status": "started"}, bson.M{})
+	if err == nil || booking.City != "" {
+		return "", errors.New("user has ongoing booking")
+	}
 	set := bson.M{}
 	set["plan_id"] = ""
 	set["plan"] = nil

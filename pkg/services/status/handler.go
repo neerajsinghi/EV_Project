@@ -3,11 +3,9 @@ package status
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	trestCommon "github.com/Trestx-technology/trestx-common-go-lib"
-	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -24,9 +22,15 @@ func Statistics(w http.ResponseWriter, r *http.Request) {
 		"start_time": startTime})
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	id := mux.Vars(r)["duration"]
-	duration, err := strconv.Atoi(id)
-	data, err := Logic(duration)
+	startDate := r.URL.Query().Get("startDate")
+	endDate := r.URL.Query().Get("endDate")
+	city := r.URL.Query().Get("city")
+	service := r.URL.Query().Get("service")
+	start, _ := time.Parse("2006-01-02", startDate)
+
+	end, _ := time.Parse("2006-01-02", endDate)
+
+	data, err := Logic(start, end, city, service)
 	if err != nil {
 		trestCommon.ECLog1(err)
 		w.WriteHeader(http.StatusOK)

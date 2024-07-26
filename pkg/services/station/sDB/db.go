@@ -41,7 +41,9 @@ func (s *service) UpdateStation(id string, document entity.StationDB) (string, e
 	if document.Location != nil {
 		update["location"] = document.Location
 	}
-
+	if document.ServicesAvailable != nil {
+		update["services_available"] = document.ServicesAvailable
+	}
 	if document.Public != nil {
 		update["public"] = document.Public
 	}
@@ -109,9 +111,9 @@ func (s *service) GetNearByStation(lat, long float64, distance int) ([]entity.St
 		}
 	}
 	for i := 0; i < len(resp); i++ {
-		if resp[i].Stock == nil || *resp[i].Stock == 0 {
-			resp = append(resp[:i], resp[i+1:]...)
-			i--
+		if resp[i].Stock == nil {
+			resp[i].Stock = new(int)
+			*resp[i].Stock = 0
 		}
 	}
 	return resp, err

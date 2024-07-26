@@ -47,6 +47,6 @@ func (c *couponS) DeleteCoupon(id string) error {
 	return repo.DeleteOne(bson.M{"_id": idObject})
 }
 
-func (c *couponS) GetCoupon() ([]entity.CouponReport, error) {
+func (c *couponS) GetCoupon() ([]entity.CouponDB, error) {
 	return repo.Find(bson.M{}, bson.M{})
 }

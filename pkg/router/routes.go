@@ -448,7 +448,7 @@ var routes = Routes{
 	Route{
 		"statistics",
 		"GET",
-		"/statistics/{duration}",
+		"/statistics",
 		status.Statistics,
 	},
 	Route{

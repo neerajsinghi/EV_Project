@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -58,7 +59,7 @@ func SendNotification(title, body, token string) {
 		Token: token,
 	}
 	if clientFirebase != nil {
-		clientFirebase.Send(context.Background(), message)
+		log.Println(clientFirebase.Send(context.Background(), message))
 	}
 }
 func ContainsString(list []string, val string) bool {
@@ -228,13 +229,17 @@ func GetDataFromPullAPI() {
 	}
 	var data response
 	err = json.Unmarshal(body, &data)
+
 	if err != nil {
 		fmt.Println(err)
-		return
+
 	}
 	var long, lat float64
 	repo := iotbike.NewProfileRepository("iotBike")
 	for i, d := range data.Data {
+		if data.Data[i].TotalDistance == "" {
+			continue
+		}
 		data.Data[i].Location.Type = "Point"
 		long, _ = strconv.ParseFloat(d.Longitude, 64)
 		lat, _ = strconv.ParseFloat(d.Latitude, 64)
