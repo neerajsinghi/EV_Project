@@ -2,7 +2,7 @@ package router
 
 import status "bikeRental/pkg/services/status"
 
-var StatusRoutes = Routes{
+var statusRoutes = Routes{
 	Route{
 		"statistics",
 		"GET",

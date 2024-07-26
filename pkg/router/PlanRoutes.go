@@ -2,7 +2,7 @@ package router
 
 import plan "bikeRental/pkg/services/plan"
 
-var PlanRoutes = Routes{
+var planRoutes = Routes{
 	Route{
 		"Add Plan",
 		"POST",

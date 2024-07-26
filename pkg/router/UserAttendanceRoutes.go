@@ -2,7 +2,7 @@ package router
 
 import userattendance "bikeRental/pkg/services/userAttendance"
 
-var UserAttendanceRoutes = Routes{
+var userAttendanceRoutes = Routes{
 	Route{
 		"get all attendance",
 		"GET",

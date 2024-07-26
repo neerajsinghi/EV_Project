@@ -2,7 +2,7 @@ package router
 
 import feedback "bikeRental/pkg/services/feedback"
 
-var FeedbackRoutes = Routes{
+var feedbackRoutes = Routes{
 	Route{
 		"Add Feedback",
 		"POST",

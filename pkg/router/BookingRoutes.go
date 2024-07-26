@@ -2,7 +2,7 @@ package router
 
 import booking "bikeRental/pkg/services/booking"
 
-var BookingRoutes = Routes{
+var bookingRoutes = Routes{
 	Route{
 		"Add Booking",
 		"POST",

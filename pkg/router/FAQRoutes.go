@@ -2,7 +2,7 @@ package router
 
 import faqdb "bikeRental/pkg/services/faq"
 
-var FAQRoutes = Routes{
+var faqRoutes = Routes{
 	Route{
 		"Get All Faqs",
 		"GET",

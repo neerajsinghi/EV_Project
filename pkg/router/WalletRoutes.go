@@ -2,7 +2,7 @@ package router
 
 import wallet "bikeRental/pkg/services/wallet"
 
-var WalletRoutes = Routes{
+var walletRoutes = Routes{
 	Route{
 		"Add Wallet",
 		"POST",

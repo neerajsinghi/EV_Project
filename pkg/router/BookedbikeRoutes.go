@@ -2,7 +2,7 @@ package router
 
 import bookedbike "bikeRental/pkg/services/bookedBike"
 
-var BookedbikeRoutes = Routes{
+var bookedBikeRoutes = Routes{
 	Route{
 		"get ongoing rides",
 		"GET",

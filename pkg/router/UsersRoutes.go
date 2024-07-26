@@ -2,7 +2,7 @@ package router
 
 import users "bikeRental/pkg/services/users"
 
-var UsersRoutes = Routes{
+var usersRoutes = Routes{
 	Route{
 		"Get All Users",
 		"GET",

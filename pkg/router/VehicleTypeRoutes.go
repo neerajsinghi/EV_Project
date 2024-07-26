@@ -2,7 +2,7 @@ package router
 
 import vehicletype "bikeRental/pkg/services/vehicleType"
 
-var VehicleTypeRoutes = Routes{
+var vehicleTypeRoutes = Routes{
 	Route{
 		"Add Vehicle Type",
 		"POST",

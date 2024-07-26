@@ -2,7 +2,7 @@ package router
 
 import reffer "bikeRental/pkg/services/reffer"
 
-var RefferRoutes = Routes{
+var refferRoutes = Routes{
 	Route{
 		"get all referral",
 		"GET",

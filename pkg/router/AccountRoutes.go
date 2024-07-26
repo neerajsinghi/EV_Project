@@ -2,7 +2,7 @@ package router
 
 import account_service "bikeRental/pkg/services/account"
 
-var AccountRoutes = Routes{
+var accountRoutes = Routes{
 	Route{
 		"Register",
 		"POST",

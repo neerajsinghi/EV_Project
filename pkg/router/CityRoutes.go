@@ -2,7 +2,7 @@ package router
 
 import city "bikeRental/pkg/services/city"
 
-var CityRoutes = Routes{
+var cityRoutes = Routes{
 	Route{
 		"get all cities",
 		"GET",

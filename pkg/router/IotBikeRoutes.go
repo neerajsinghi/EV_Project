@@ -2,7 +2,7 @@ package router
 
 import iotbike "bikeRental/pkg/services/iotBike"
 
-var IotBikeRoutes = Routes{
+var iotBikeRoutes = Routes{
 	Route{
 		"Get ALL Bikes",
 		"GET",
