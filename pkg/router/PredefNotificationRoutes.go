@@ -2,7 +2,7 @@ package router
 
 import predefnotification "bikeRental/pkg/services/predefNotification"
 
-var PredefNotificationRoutes = Routes{
+var predefNotificationRoutes = Routes{
 	Route{
 		"get all notification templates",
 		"GET",

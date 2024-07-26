@@ -2,7 +2,7 @@ package router
 
 import notifications "bikeRental/pkg/services/notifications"
 
-var NotificationsRoutes = Routes{
+var notificationsRoutes = Routes{
 	Route{
 		"Send Notification",
 		"POST",

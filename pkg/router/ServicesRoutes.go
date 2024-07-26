@@ -2,7 +2,7 @@ package router
 
 import services "bikeRental/pkg/services/services"
 
-var ServicesRoutes = Routes{
+var servicesRoutes = Routes{
 	Route{
 		"Insert Service",
 		"POST",

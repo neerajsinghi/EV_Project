@@ -2,7 +2,7 @@ package router
 
 import charger "bikeRental/pkg/services/charger"
 
-var ChargerRoutes = Routes{
+var chargerRoutes = Routes{
 	Route{
 		"Add Charger",
 		"POST",

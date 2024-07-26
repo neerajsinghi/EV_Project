@@ -2,7 +2,7 @@ package router
 
 import coupon "bikeRental/pkg/services/coupon"
 
-var CouponRoutes = Routes{
+var couponRoutes = Routes{
 	Route{
 		"Add Coupon",
 		"POST",
