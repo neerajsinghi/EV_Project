@@ -24,7 +24,7 @@ func NewService() PlanI {
 func (s *service) AddPlan(plan entity.PlanDB) (string, error) {
 	plan.ID = primitive.NewObjectID()
 	plan.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
-	if plan.Price == 0 {
+	if plan.Price == 0 && plan.Deposit == nil {
 		return "", errors.New("price is required")
 	}
 	if plan.Type == "" {
@@ -59,6 +59,10 @@ func (s *service) AddPlan(plan entity.PlanDB) (string, error) {
 
 	plan.IsActive = new(bool)
 	*plan.IsActive = true
+	if plan.Deposit == nil {
+		plan.Deposit = new(float64)
+		*plan.Deposit = 0
+	}
 	return repo.InsertOne(plan)
 }
 
@@ -134,4 +138,27 @@ func (s *service) UpdatePlan(id string, plan entity.PlanDB) (string, error) {
 
 	return repo.UpdateOne(bson.M{"_id": idObject}, bson.M{"$set": set})
 
+}
+
+func GetDeposit(city, planType string) (float64, error) {
+	filter := bson.M{}
+	if city != "" {
+		filter["city"] = city
+	}
+	if planType != "" {
+		filter["type"] = planType
+	}
+	dat, err := repo.Find(filter, bson.M{})
+	if err != nil {
+		return 0, err
+	}
+	if len(dat) == 0 {
+		return 0, errors.New("no deposit found")
+	}
+	for _, v := range dat {
+		if v.IsActive != nil && *v.IsActive && v.Deposit != nil {
+			return *v.Deposit, nil
+		}
+	}
+	return 0, nil
 }

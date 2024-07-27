@@ -4,6 +4,7 @@ import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/services/booking/db"
 	"bikeRental/pkg/services/chronjobs"
+	utils "bikeRental/pkg/util"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -146,7 +147,23 @@ func UpdateBooking(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	dataBooking, _ := db.GetBooking(id)
+	if booking.Status == "resumed" {
+		dataBooking, _ = db.GetBooking(data)
+	}
+
 	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": dataBooking, "dataSucces": data})
+}
+func ResumeStoppedBooking(w http.ResponseWriter, r *http.Request) {
+	utils.SetOutput(w)
+	id := mux.Vars(r)["id"]
+	data, err := service.UpdateBooking(id, entity.BookingDB{Status: "resumed"})
+	if err != nil {
+		trestCommon.ECLog1(err)
+		return
+	}
+	chronjobs.CheckBooking()
+	dataBooking, _ := db.GetBooking(data)
+	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": dataBooking})
 }
 func GetBookingByID(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()

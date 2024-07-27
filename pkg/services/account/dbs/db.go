@@ -308,6 +308,7 @@ func (*accountService) hashAndInsertData(cred Credentials) (string, error) {
 		user, err := repo.FindOne(bson.M{"referral_code": *cred.ReferralCodeUsed}, bson.M{})
 		if err == nil {
 			walletS := entity.WalletS{
+				ID:             primitive.NewObjectID(),
 				UserID:         user.ID.Hex(),
 				DepositedMoney: 40,
 				Description:    "Referral Bonus",

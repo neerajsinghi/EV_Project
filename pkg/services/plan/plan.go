@@ -3,6 +3,7 @@ package plan
 import (
 	"bikeRental/pkg/entity"
 	pdb "bikeRental/pkg/services/plan/pDB"
+	utils "bikeRental/pkg/util"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -146,4 +147,12 @@ func getPlan(r *http.Request) (entity.PlanDB, error) {
 		return entity.PlanDB{}, err
 	}
 	return plan, nil
+}
+
+func GetDeposit(w http.ResponseWriter, r *http.Request) {
+	utils.SetOutput(w)
+	pType := r.URL.Query().Get("type")
+	city := r.URL.Query().Get("city")
+	data, err := pdb.GetDeposit(city, pType)
+	utils.SendOutput(err, w, data)
 }
