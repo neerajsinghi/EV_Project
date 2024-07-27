@@ -27,7 +27,7 @@ func AddStation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := service.AddStation(station)
-	utils.SendOutput(err, w, r, data, "AddStation")
+	utils.SendOutput(err, w, r, data, station, "AddStation")
 }
 
 // UpdateStation updates a station
@@ -42,7 +42,7 @@ func UpdateStation(w http.ResponseWriter, r *http.Request) {
 	}
 	id := mux.Vars(r)["id"]
 	data, err := service.UpdateStation(id, station)
-	utils.SendOutput(err, w, r, data, "UpdateStation")
+	utils.SendOutput(err, w, r, data, station, "UpdateStation")
 }
 
 // DeleteStation deletes a station
@@ -50,14 +50,14 @@ func DeleteStation(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := service.DeleteStation(id)
-	utils.SendOutput(err, w, r, "Deleted successfully", "DeleteStation")
+	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteStation")
 }
 
 // GetAllStations gets all stations
 func GetAllStations(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	data, err := service.GetStation()
-	utils.SendOutput(err, w, r, data, "GetAllStations")
+	utils.SendOutput(err, w, r, data, nil, "GetAllStations")
 }
 
 // GetNearByStations gets all stations near by
@@ -70,13 +70,13 @@ func GetNearByStations(w http.ResponseWriter, r *http.Request) {
 	lonFloat, _ := strconv.ParseFloat(lon, 64)
 	distanceInt, _ := strconv.Atoi(distance)
 	data, err := service.GetNearByStation(latFloat, lonFloat, distanceInt)
-	utils.SendOutput(err, w, r, data, "GetNearByStations")
+	utils.SendOutput(err, w, r, data, nil, "GetNearByStations")
 }
 func GetStationsByID(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	data, err := service.GetStationByID(id)
-	utils.SendOutput(err, w, r, data, "GetStationsByID")
+	utils.SendOutput(err, w, r, data, nil, "GetStationsByID")
 }
 
 func getStation(r *http.Request) (entity.StationDB, error) {

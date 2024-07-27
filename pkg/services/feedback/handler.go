@@ -22,14 +22,14 @@ func AddFeedback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, err := feed.AddFeedback(feedback)
-	utils.SendOutput(err, w, r, id, "AddFeedback")
+	utils.SendOutput(err, w, r, id, feedback, "AddFeedback")
 }
 
 // GetFeedbacks returns all feedbacks
 func GetFeedbacks(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	data, err := feed.GetFeedbacks()
-	utils.SendOutput(err, w, r, data, "GetFeedbacks")
+	utils.SendOutput(err, w, r, data, nil, "GetFeedbacks")
 }
 
 // DeleteFeedback deletes a feedback
@@ -37,7 +37,7 @@ func DeleteFeedback(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := feed.DeleteFeedback(id)
-	utils.SendOutput(err, w, r, "Deleted successfully", "DeleteFeedback")
+	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteFeedback")
 }
 
 func parseFeed(r *http.Request) (entity.Feedback, error) {

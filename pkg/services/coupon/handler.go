@@ -26,7 +26,7 @@ func AddCoupon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := coupon.AddCoupon(couponD)
-	utils.SendOutput(err, w, r, data, "AddCoupon")
+	utils.SendOutput(err, w, r, data, couponD, "AddCoupon")
 }
 
 // UpdateCoupon updates a coupon
@@ -41,7 +41,7 @@ func UpdateCoupon(w http.ResponseWriter, r *http.Request) {
 	}
 	id := mux.Vars(r)["id"]
 	data, err := coupon.UpdateCoupon(id, couponD)
-	utils.SendOutput(err, w, r, data, "UpdateCoupon")
+	utils.SendOutput(err, w, r, data, couponD, "UpdateCoupon")
 }
 
 // DeleteCoupon deletes a coupon
@@ -49,14 +49,14 @@ func DeleteCoupon(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := coupon.DeleteCoupon(id)
-	utils.SendOutput(err, w, r, "Deleted successfully", "DeleteCoupon")
+	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteCoupon")
 }
 
 // GetCoupon gets a coupon
 func GetCoupons(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	data, err := coupon.GetCoupon()
-	utils.SendOutput(err, w, r, data, "GetCoupon")
+	utils.SendOutput(err, w, r, data, nil, "GetCoupon")
 }
 
 func getCoupon(r *http.Request) (entity.CouponDB, error) {

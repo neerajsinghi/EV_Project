@@ -21,7 +21,7 @@ func Statistics(w http.ResponseWriter, r *http.Request) {
 	end, _ := time.Parse("2006-01-02", endDate)
 
 	data, err := Logic(start, end, city, service)
-	utils.SendOutput(err, w, r, data, "Statistics")
+	utils.SendOutput(err, w, r, data, nil, "Statistics")
 }
 
 func GetVehicleDataHand(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +29,7 @@ func GetVehicleDataHand(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	idi, _ := strconv.Atoi(id)
 	data, err := GetVehicleData(idi)
-	utils.SendOutput(err, w, r, data, "GetVehicleData")
+	utils.SendOutput(err, w, r, data, nil, "GetVehicleData")
 }
 
 func ImmobilizeDevHand(w http.ResponseWriter, r *http.Request) {
@@ -37,5 +37,5 @@ func ImmobilizeDevHand(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	idi, _ := strconv.Atoi(id)
 	err := ImmobilizeDevice(idi)
-	utils.SendOutput(err, w, r, "immobilized successfully", "ImmobilizeDevice")
+	utils.SendOutput(err, w, r, "immobilized successfully", id, "ImmobilizeDevice")
 }

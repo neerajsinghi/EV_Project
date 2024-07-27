@@ -276,12 +276,13 @@ type AddLog struct {
 	Data        string
 	Request     string
 	RequestType string
+	Body        string
 }
 
-func SendOutput(err error, w http.ResponseWriter, r *http.Request, data interface{}, apiName string) {
+func SendOutput(err error, w http.ResponseWriter, r *http.Request, data, body interface{}, apiName string) {
 
 	token := r.Header.Get("Authorization")
-	if token != "" {
+	if token != "" && (r.Method != "GET" || body != nil) {
 		tokens := strings.Split(token, " ")
 		if len(tokens) > 1 {
 			token = tokens[1]
@@ -300,8 +301,11 @@ func SendOutput(err error, w http.ResponseWriter, r *http.Request, data interfac
 			if err != nil {
 				logData.Err = err.Error()
 			}
-			// UserId:   da["userId"].(string),
-			// UserRole: da["role"].(string),
+			if body != nil {
+				dat, _ := json.Marshal(body)
+
+				logData.Body = string(dat)
+			}
 			if da["userid"] != nil {
 				logData.UserId = da["userid"].(string)
 			}

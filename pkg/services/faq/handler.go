@@ -25,7 +25,7 @@ func AddFaq(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := service.AddFaq(faq)
-	utils.SendOutput(err, w, r, data, "AddFaq")
+	utils.SendOutput(err, w, r, data, faq, "AddFaq")
 }
 
 func UpdateFaq(w http.ResponseWriter, r *http.Request) {
@@ -41,19 +41,19 @@ func UpdateFaq(w http.ResponseWriter, r *http.Request) {
 	}
 	id := mux.Vars(r)["id"]
 	data, err := service.UpdateFaq(id, faq)
-	utils.SendOutput(err, w, r, data, "UpdateFaq")
+	utils.SendOutput(err, w, r, data, faq, "UpdateFaq")
 }
 func DeleteFaq(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := service.DeleteFaq(id)
-	utils.SendOutput(err, w, r, "Deleted successfully", "DeleteFaq")
+	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteFaq")
 }
 
 func GetAllFaq(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	data, err := service.GetAllFaq()
-	utils.SendOutput(err, w, r, data, "GetAllFaq")
+	utils.SendOutput(err, w, r, data, nil, "GetAllFaq")
 }
 func parseFaq(r *http.Request) (entity.FAQDB, error) {
 	var faq entity.FAQDB

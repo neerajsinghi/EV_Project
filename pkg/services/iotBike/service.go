@@ -17,7 +17,7 @@ func GetAll(w http.ResponseWriter, r *http.Request) {
 
 	utils.SetOutput(w)
 	data, err := service.FindAll()
-	utils.SendOutput(err, w, r, data, "GetAll")
+	utils.SendOutput(err, w, r, data, nil, "GetAll")
 
 }
 
@@ -38,6 +38,6 @@ func GetNearest(w http.ResponseWriter, r *http.Request) {
 	longFloat, _ := strconv.ParseFloat(long, 64)
 	distantInt, _ := strconv.Atoi(distance)
 	data, err := service.FindNearByBikes(latFloat, longFloat, distantInt, bType)
-	utils.SendOutput(err, w, r, data, "GetNearest")
+	utils.SendOutput(err, w, r, data, nil, "GetNearest")
 
 }

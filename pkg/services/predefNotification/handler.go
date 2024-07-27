@@ -19,42 +19,42 @@ func GetPredef(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data, err = Get(name)
 	}
-	utils.SendOutput(err, w, r, data, "GetPreddef")
+	utils.SendOutput(err, w, r, data, nil, "GetPreddef")
 }
 func AddPredef(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	notification, err := parseNotification(r)
 	if err != nil {
-		utils.SendOutput(err, w, r, nil, "AddPredef")
+		utils.SendOutput(err, w, r, nil, notification, "AddPredef")
 		return
 	}
 	data, err := InsertOne(notification)
-	utils.SendOutput(err, w, r, data, "AddPredef")
+	utils.SendOutput(err, w, r, data, notification, "AddPredef")
 }
 func UpdatePredef(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	name := r.URL.Query().Get("name")
 	if name == "" {
-		utils.SendOutput(errors.New("name missing"), w, r, nil, "UpdatePredef")
+		utils.SendOutput(errors.New("name missing"), w, r, nil, nil, "UpdatePredef")
 		return
 	}
 	notification, err := parseNotification(r)
 	if err != nil {
-		utils.SendOutput(err, w, r, nil, "UpdatePredef")
+		utils.SendOutput(err, w, r, nil, notification, "UpdatePredef")
 		return
 	}
 	data, err := UpdateOne(name, notification)
-	utils.SendOutput(err, w, r, data, "UpdatePredef")
+	utils.SendOutput(err, w, r, data, notification, "UpdatePredef")
 }
 func DeletePredef(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	name := r.URL.Query().Get("name")
 	if name == "" {
-		utils.SendOutput(errors.New("name missing"), w, r, nil, "DeletePredef")
+		utils.SendOutput(errors.New("name missing"), w, r, nil, nil, "DeletePredef")
 		return
 	}
 	err := DeleteOne(name)
-	utils.SendOutput(err, w, r, nil, "DeletePredef")
+	utils.SendOutput(err, w, r, nil, nil, "DeletePredef")
 }
 func parseNotification(r *http.Request) (entity.PreDefNotification, error) {
 	var notification entity.PreDefNotification

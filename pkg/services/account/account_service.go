@@ -106,7 +106,7 @@ func LoginUsingPhone(w http.ResponseWriter, r *http.Request) {
 
 	}
 	response, err := accountService.LoginUsingPhone(user.PhoneNo)
-	utils.SendOutput(err, w, r, response, "LoginUsingPhone")
+	utils.SendOutput(err, w, r, response, user, "LoginUsingPhone")
 }
 func ForgetPasswordOTPLink(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
@@ -120,7 +120,7 @@ func ForgetPasswordOTPLink(w http.ResponseWriter, r *http.Request) {
 
 	}
 	data, err := accountService.SendEmailOTP(user.Email)
-	utils.SendOutput(err, w, r, data, "ForgetPasswordOTPLink")
+	utils.SendOutput(err, w, r, data, nil, "ForgetPasswordOTPLink")
 }
 func VerifyAndUpdatePassword(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
@@ -134,7 +134,7 @@ func VerifyAndUpdatePassword(w http.ResponseWriter, r *http.Request) {
 
 	}
 	data, _, err := accountService.VerifyResetLink(user)
-	utils.SendOutput(err, w, r, data, "VerifyAndUpdatePassword")
+	utils.SendOutput(err, w, r, data, nil, "VerifyAndUpdatePassword")
 }
 func VerifyOTPAndSendToken(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
@@ -197,7 +197,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 	}
 	data, err := accountService.ChangePassword(user)
-	utils.SendOutput(err, w, r, data, "ChangePassword")
+	utils.SendOutput(err, w, r, data, user, "ChangePassword")
 }
 
 func GetCredentials(r *http.Request) (db.Credentials, error) {

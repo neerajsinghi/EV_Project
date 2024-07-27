@@ -26,7 +26,7 @@ func AddService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := serviceDB.InsertOne(service)
-	utils.SendOutput(err, w, r, data, "AddService")
+	utils.SendOutput(err, w, r, data, service, "AddService")
 }
 
 // UpdateService updates a service
@@ -41,7 +41,7 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 	}
 	id := mux.Vars(r)["id"]
 	data, err := serviceDB.UpdateService(id, service)
-	utils.SendOutput(err, w, r, data, "UpdateService")
+	utils.SendOutput(err, w, r, data, service, "UpdateService")
 }
 
 // DeleteService deletes a service
@@ -49,13 +49,13 @@ func DeleteService(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := serviceDB.DeleteService(id)
-	utils.SendOutput(err, w, r, "Deleted successfully", "DeleteService")
+	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteService")
 }
 
 func GetService(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	data, err := serviceDB.GetAllServices()
-	utils.SendOutput(err, w, r, data, "GetAllServices")
+	utils.SendOutput(err, w, r, data, nil, "GetAllServices")
 }
 func getService(r *http.Request) (entity.ServiceDB, error) {
 	var service entity.ServiceDB

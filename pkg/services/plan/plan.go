@@ -24,20 +24,20 @@ func AddPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := service.AddPlan(plan)
-	utils.SendOutput(err, w, r, data, "AddPlan")
+	utils.SendOutput(err, w, r, data, plan, "AddPlan")
 }
 func GetAllPlans(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	pType := r.URL.Query().Get("type")
 	city := r.URL.Query().Get("city")
 	data, err := service.GetPlans(pType, city)
-	utils.SendOutput(err, w, r, data, "GetAllPlans")
+	utils.SendOutput(err, w, r, data, nil, "GetAllPlans")
 }
 func GetPlanById(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	params := mux.Vars(r)
 	data, err := service.GetPlan(params["id"])
-	utils.SendOutput(err, w, r, data, "GetPlanById")
+	utils.SendOutput(err, w, r, data, nil, "GetPlanById")
 }
 func UpdatePlan(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
@@ -50,13 +50,13 @@ func UpdatePlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := service.UpdatePlan(id, plan)
-	utils.SendOutput(err, w, r, data, "UpdatePlan")
+	utils.SendOutput(err, w, r, data, plan, "UpdatePlan")
 }
 func DeletePlan(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := service.DeletePlan(id)
-	utils.SendOutput(err, w, r, "Deleted successfully", "DeletePlan")
+	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeletePlan")
 }
 func getPlan(r *http.Request) (entity.PlanDB, error) {
 	var plan entity.PlanDB
@@ -72,5 +72,5 @@ func GetDeposit(w http.ResponseWriter, r *http.Request) {
 	pType := r.URL.Query().Get("type")
 	city := r.URL.Query().Get("city")
 	data, err := pdb.GetDeposit(city, pType)
-	utils.SendOutput(err, w, r, data, "GetDeposit")
+	utils.SendOutput(err, w, r, data, nil, "GetDeposit")
 }

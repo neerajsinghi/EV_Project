@@ -25,18 +25,18 @@ func AddWallet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := service.InsertOne(wallet)
-	utils.SendOutput(err, w, r, data, "AddWallet")
+	utils.SendOutput(err, w, r, data, wallet, "AddWallet")
 }
 func GetAllWallets(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	data, err := service.Find()
-	utils.SendOutput(err, w, r, data, "GetAllWallets")
+	utils.SendOutput(err, w, r, data, nil, "GetAllWallets")
 }
 func GetMyWallet(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	data, err := service.FindMy(id)
-	utils.SendOutput(err, w, r, data, "GetMyWallet")
+	utils.SendOutput(err, w, r, data, nil, "GetMyWallet")
 }
 func getWallet(r *http.Request) (entity.WalletS, error) {
 	var wallet entity.WalletS

@@ -22,19 +22,19 @@ func AddCityHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := AddCity(booking)
-	utils.SendOutput(err, w, r, data, "AddCity")
+	utils.SendOutput(err, w, r, data, nil, "AddCity")
 }
 
 func GetAllCitiesHandler(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	data, err := GetCities()
-	utils.SendOutput(err, w, r, data, "GetAllCities")
+	utils.SendOutput(err, w, r, data, nil, "GetAllCities")
 }
 func GetCityHandler(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	data, err := GetCity(id)
-	utils.SendOutput(err, w, r, data, "GetCity")
+	utils.SendOutput(err, w, r, data, nil, "GetCity")
 }
 func InCityHandler(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
@@ -43,7 +43,7 @@ func InCityHandler(w http.ResponseWriter, r *http.Request) {
 	latF, _ := strconv.ParseFloat(lat, 64)
 	longF, _ := strconv.ParseFloat(long, 64)
 	data, err := InCity(latF, longF)
-	utils.SendOutput(err, w, r, data, "InCity")
+	utils.SendOutput(err, w, r, data, nil, "InCity")
 }
 func UpdateCityHandler(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
@@ -56,14 +56,14 @@ func UpdateCityHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := UpdateCity(id, city)
-	utils.SendOutput(err, w, r, data, "UpdateCity")
+	utils.SendOutput(err, w, r, data, city, "UpdateCity")
 }
 
 func DeleteCityHandler(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := DeleteCity(id)
-	utils.SendOutput(err, w, r, "Deleted successfully", "DeleteCity")
+	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteCity")
 }
 
 func parseCity(r *http.Request) (entity.City, error) {

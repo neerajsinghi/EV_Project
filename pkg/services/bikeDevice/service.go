@@ -26,7 +26,7 @@ func AddBikeDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := service.AddBikeDevice(bikeDevice)
-	utils.SendOutput(err, w, r, data, "AddBikeDevice")
+	utils.SendOutput(err, w, r, data, bikeDevice, "AddBikeDevice")
 }
 
 // UpdateBikeDevice updates a bike
@@ -41,7 +41,7 @@ func UpdateBikeDevice(w http.ResponseWriter, r *http.Request) {
 	}
 	id := mux.Vars(r)["id"]
 	data, err := service.UpdateBikeDevice(id, bikeDevice)
-	utils.SendOutput(err, w, r, data, "UpdateBikeDevice")
+	utils.SendOutput(err, w, r, data, bikeDevice, "UpdateBikeDevice")
 }
 
 // DeleteBikeDevice deletes a bike
@@ -49,27 +49,27 @@ func DeleteBikeDevice(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := service.DeleteBikeDevice(id)
-	utils.SendOutput(err, w, r, "Deleted successfully", "DeleteBikeDevice")
+	utils.SendOutput(err, w, r, "Deleted successfully", id, "DeleteBikeDevice")
 }
 
 // FindAll returns all the bikes
 func GetAll(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	data, err := service.FindAll()
-	utils.SendOutput(err, w, r, data, "GetAll")
+	utils.SendOutput(err, w, r, data, nil, "GetAll")
 
 }
 func GetBikeDevicesByStation(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	stationID := mux.Vars(r)["stationID"]
 	data, err := service.FindBikeByStation(stationID)
-	utils.SendOutput(err, w, r, data, "GetBikeDevicesByStation")
+	utils.SendOutput(err, w, r, data, stationID, "GetBikeDevicesByStation")
 }
 func GetBikeDevicesByDeviceID(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	stationID := mux.Vars(r)["id"]
 	data, err := service.FindBikeByDeviceID(stationID)
-	utils.SendOutput(err, w, r, data, "GetBikeDevicesByDeviceID")
+	utils.SendOutput(err, w, r, data, nil, "GetBikeDevicesByDeviceID")
 }
 func getBikeDevice(r *http.Request) (bikeDevice entity.DeviceInfo, err error) {
 	err = json.NewDecoder(r.Body).Decode(&bikeDevice)

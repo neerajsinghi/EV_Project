@@ -27,7 +27,7 @@ func AddCharger(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := service.AddCharger(station)
-	utils.SendOutput(err, w, r, data, "AddCharger")
+	utils.SendOutput(err, w, r, data, station, "AddCharger")
 }
 
 // UpdateCharger updates a station
@@ -42,7 +42,7 @@ func UpdateCharger(w http.ResponseWriter, r *http.Request) {
 	}
 	id := mux.Vars(r)["id"]
 	data, err := service.UpdateCharger(id, station)
-	utils.SendOutput(err, w, r, data, "UpdateCharger")
+	utils.SendOutput(err, w, r, data, station, "UpdateCharger")
 }
 
 // DeleteCharger deletes a station
@@ -50,14 +50,14 @@ func DeleteCharger(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := service.DeleteCharger(id)
-	utils.SendOutput(err, w, r, "Deleted successfully", "DeleteCharger")
+	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteCharger")
 }
 
 // GetAllChargers gets all stations
 func GetAllChargers(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	data, err := service.GetCharger()
-	utils.SendOutput(err, w, r, data, "GetAllChargers")
+	utils.SendOutput(err, w, r, data, nil, "GetAllChargers")
 }
 
 // GetNearByChargers gets all stations near by
@@ -70,7 +70,7 @@ func GetNearByChargers(w http.ResponseWriter, r *http.Request) {
 	lonFloat, _ := strconv.ParseFloat(lon, 64)
 	distanceInt, _ := strconv.Atoi(distance)
 	data, err := service.GetNearByCharger(latFloat, lonFloat, distanceInt)
-	utils.SendOutput(err, w, r, data, "GetNearByChargers")
+	utils.SendOutput(err, w, r, data, nil, "GetNearByChargers")
 }
 
 func getCharger(r *http.Request) (entity.ChargerDB, error) {

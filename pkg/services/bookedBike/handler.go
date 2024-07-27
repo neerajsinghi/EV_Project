@@ -11,5 +11,5 @@ func GetBookedBike(w http.ResponseWriter, r *http.Request) {
 	userID := r.URL.Query().Get("userID")
 	bookingId := r.URL.Query().Get("bookingId")
 	data, err := bookedlogic.GetBookedBike(userID, bookingId)
-	utils.SendOutput(err, w, r, data, "GetBookedBike")
+	utils.SendOutput(err, w, r, data, nil, "GetBookedBike")
 }

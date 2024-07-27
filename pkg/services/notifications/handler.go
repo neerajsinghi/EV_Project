@@ -25,7 +25,7 @@ func SendNotification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = service.SendNotification(notification.Title, notification.Body, notification.UserId, notification.Type, notification.Token)
-	utils.SendOutput(err, w, r, "Notification sent successfully", "SendNotification")
+	utils.SendOutput(err, w, r, "Notification sent successfully", notification, "SendNotification")
 }
 
 // GetAllNotifications returns all notifications.
@@ -33,7 +33,7 @@ func GetAllNotifications(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 
 	notifications, err := service.GetAllNotifications()
-	utils.SendOutput(err, w, r, notifications, "GetAllNotifications")
+	utils.SendOutput(err, w, r, notifications, nil, "GetAllNotifications")
 }
 func parseNotificationRequest(r *http.Request) (entity.Notification, error) {
 	var notification entity.Notification
@@ -64,5 +64,5 @@ func SendMultipleNotifications(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = service.SendMultipleNotifications(notification.Title, notification.Body, notification.Type, notification.UserIds, notification.Tokens)
-	utils.SendOutput(err, w, r, "Notifications sent successfully", "SendMultipleNotifications")
+	utils.SendOutput(err, w, r, "Notifications sent successfully", notification, "SendMultipleNotifications")
 }
