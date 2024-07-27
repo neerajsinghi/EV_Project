@@ -45,4 +45,5 @@ type DeviceInfo struct {
 	InsurancePolicy     string             `bson:"insurance_policy" json:"insurancePolicy,omitempty"`
 	VehicleRegistration string             `bson:"vehicle_registration" json:"vehicleRegistration,omitempty"`
 	PermitsRequired     []string           `bson:"permits_required" json:"permitsRequired,omitempty"`
+	Immobilized         bool               `bson:"immobilized" json:"immobilized,omitempty"`
 }

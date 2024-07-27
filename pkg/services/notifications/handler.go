@@ -3,6 +3,7 @@ package notifications
 import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/services/notifications/notify"
+	utils "bikeRental/pkg/util"
 	"encoding/json"
 	"net/http"
 
@@ -14,8 +15,7 @@ var service = notify.NewService()
 
 // Notify defines the required methods for the notification service.
 func SendNotification(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 
 	notification, err := parseNotificationRequest(r)
 	if err != nil {
@@ -25,30 +25,15 @@ func SendNotification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = service.SendNotification(notification.Title, notification.Body, notification.UserId, notification.Type, notification.Token)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "unable to send notification"})
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": ""})
+	utils.SendOutput(err, w, r, "Notification sent successfully", "SendNotification")
 }
 
 // GetAllNotifications returns all notifications.
 func GetAllNotifications(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 
 	notifications, err := service.GetAllNotifications()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "unable to get notifications"})
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": notifications})
+	utils.SendOutput(err, w, r, notifications, "GetAllNotifications")
 }
 func parseNotificationRequest(r *http.Request) (entity.Notification, error) {
 	var notification entity.Notification
@@ -69,8 +54,7 @@ func parseMultiNotificationRequest(r *http.Request) (entity.NotificationMulti, e
 
 // SendMultipleNotifications sends notifications to multiple users.
 func SendMultipleNotifications(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 
 	notification, err := parseMultiNotificationRequest(r)
 	if err != nil {
@@ -80,12 +64,5 @@ func SendMultipleNotifications(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = service.SendMultipleNotifications(notification.Title, notification.Body, notification.Type, notification.UserIds, notification.Tokens)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "unable to send notifications"})
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": ""})
+	utils.SendOutput(err, w, r, "Notifications sent successfully", "SendMultipleNotifications")
 }

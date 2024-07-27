@@ -1,7 +1,6 @@
 package router
 
-import 	"net/http"
-
+import "net/http"
 
 // Route type description
 type Route struct {

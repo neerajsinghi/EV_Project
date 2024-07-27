@@ -3,6 +3,7 @@ package account_service
 import (
 	"bikeRental/pkg/repo/profile"
 	db "bikeRental/pkg/services/account/dbs"
+	utils "bikeRental/pkg/util"
 	"log"
 
 	"encoding/json"
@@ -67,11 +68,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginUsingPassword(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	trestCommon.DLogMap("login email sent", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 
 	user, err := GetCredentials(r)
 	if err != nil {
@@ -96,16 +93,9 @@ func LoginUsingPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "token": token, "data": data})
-	endTime := time.Now()
-	duration := endTime.Sub(startTime)
-	trestCommon.DLogMap("login email sent successfully", logrus.Fields{"duration": duration})
 }
 func LoginUsingPhone(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	trestCommon.DLogMap("login email sent", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 
 	user, err := GetCredentials(r)
 	if err != nil {
@@ -116,30 +106,10 @@ func LoginUsingPhone(w http.ResponseWriter, r *http.Request) {
 
 	}
 	response, err := accountService.LoginUsingPhone(user.PhoneNo)
-	if err != nil {
-		if err.Error() == "user not verified" {
-			trestCommon.ECLog1(errors.Wrapf(err, "unable to login"))
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Email not Verified"})
-			return
-		}
-		trestCommon.ECLog1(errors.Wrapf(err, "unable to login"))
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "invalid credentials"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "response": response})
-	endTime := time.Now()
-	duration := endTime.Sub(startTime)
-	trestCommon.DLogMap("login email sent successfully", logrus.Fields{"duration": duration})
+	utils.SendOutput(err, w, r, response, "LoginUsingPhone")
 }
 func ForgetPasswordOTPLink(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	trestCommon.DLogMap("login email sent", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 
 	user, err := GetCredentials(r)
 	if err != nil {
@@ -150,30 +120,10 @@ func ForgetPasswordOTPLink(w http.ResponseWriter, r *http.Request) {
 
 	}
 	data, err := accountService.SendEmailOTP(user.Email)
-	if err != nil {
-		if err.Error() == "user not verified" {
-			trestCommon.ECLog1(errors.Wrapf(err, "unable to login"))
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Wrong Email"})
-			return
-		}
-		trestCommon.ECLog1(errors.Wrapf(err, "unable to login"))
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Wrong Email"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
-	endTime := time.Now()
-	duration := endTime.Sub(startTime)
-	trestCommon.DLogMap("login email sent successfully", logrus.Fields{"duration": duration})
+	utils.SendOutput(err, w, r, data, "ForgetPasswordOTPLink")
 }
 func VerifyAndUpdatePassword(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	trestCommon.DLogMap("login email sent", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 
 	user, err := GetCredentials(r)
 	if err != nil {
@@ -184,30 +134,10 @@ func VerifyAndUpdatePassword(w http.ResponseWriter, r *http.Request) {
 
 	}
 	data, _, err := accountService.VerifyResetLink(user)
-	if err != nil {
-		if err.Error() == "user not verified" {
-			trestCommon.ECLog1(errors.Wrapf(err, "unable to login"))
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Wrong Email"})
-			return
-		}
-		trestCommon.ECLog1(errors.Wrapf(err, "unable to login"))
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Wrong Email"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
-	endTime := time.Now()
-	duration := endTime.Sub(startTime)
-	trestCommon.DLogMap("login email sent successfully", logrus.Fields{"duration": duration})
+	utils.SendOutput(err, w, r, data, "VerifyAndUpdatePassword")
 }
 func VerifyOTPAndSendToken(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	trestCommon.DLogMap("login email sent", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 
 	user, err := GetCredentials(r)
 	if err != nil {
@@ -242,16 +172,9 @@ func VerifyOTPAndSendToken(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data, "token": token})
-	endTime := time.Now()
-	duration := endTime.Sub(startTime)
-	trestCommon.DLogMap("login email sent successfully", logrus.Fields{"duration": duration})
 }
 func ChangePassword(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	trestCommon.DLogMap("login email sent", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	tokenString := strings.Split(r.Header.Get("Authorization"), " ")
 	if len(tokenString) < 2 {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -274,23 +197,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 	}
 	data, err := accountService.ChangePassword(user)
-	if err != nil {
-		if err.Error() == "user not verified" {
-			trestCommon.ECLog1(errors.Wrapf(err, "unable to login"))
-			w.WriteHeader(http.StatusAccepted)
-			json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Wrong OTP"})
-			return
-		}
-		trestCommon.ECLog1(errors.Wrapf(err, "unable to login"))
-		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Wrong OTP"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
-	endTime := time.Now()
-	duration := endTime.Sub(startTime)
-	trestCommon.DLogMap("login email sent successfully", logrus.Fields{"duration": duration})
+	utils.SendOutput(err, w, r, data, "ChangePassword")
 }
 
 func GetCredentials(r *http.Request) (db.Credentials, error) {

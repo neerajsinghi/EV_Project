@@ -12,6 +12,7 @@ import (
 	wdb "bikeRental/pkg/services/wallet/db"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -119,7 +120,8 @@ func CheckBooking() {
 				motog.ImmoblizeDevice(1, booking.BikeWithDevice.Name)
 			}
 			//stop booking
-			bdb.ChangeStatusStopped(booking.ID.Hex(), wallet.TotalBalance, time.Now().Unix())
+			totalDistance, _ := strconv.ParseFloat(booking.BikeWithDevice.TotalDistance, 64)
+			bdb.ChangeStatusStopped(booking.ID.Hex(), wallet.TotalBalance, time.Now().Unix(), totalDistance)
 		}
 	}
 
@@ -137,7 +139,7 @@ func CheckAndUpdateOnGoingRides() {
 			UserID:      booking.ProfileID,
 			OnGoing:     true,
 			Booking:     booking,
-			Coordinates: booking.BikeWithDevice.Location.Coordinates[1],
+			Coordinates: booking.BikeWithDevice.Location.Coordinates,
 		}
 		if booking.StartingStation != nil {
 			booked.StartingStation = booking.StartingStation.Name

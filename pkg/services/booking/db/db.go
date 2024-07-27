@@ -88,6 +88,7 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	}
 
 	document.StartingStation = &station
+
 	if document.Plan == nil || document.Plan.ID.Hex() == "" {
 		return "", errors.New("plan not found")
 	}
@@ -95,6 +96,7 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	plan, err := pdb.NewService().GetPlan(document.Plan.ID.Hex())
 	if err == nil {
 		document.Plan = &plan
+		document.VehicleType = plan.VehicleType
 		document.City = plan.City
 		document.BookingType = string(plan.Type)
 		if plan.Type == "hourly" {
@@ -294,7 +296,7 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 
 		set["end_km"] = totalDistanceInt
 		set["total_distance"] = totalDistanceInt - booking.StartKM
-		userTotalDist := (totalDistanceInt - booking.StartKM) / 1000
+		userTotalDist := (totalDistanceInt - booking.StartKM)
 		greenPoints := int64(userTotalDist * 5)
 		carbonSaved := userTotalDist * 80
 		profile := entity.ProfileDB{
@@ -455,14 +457,28 @@ func AddTimeRemaining(id string, timeRemaining int) {
 	repo.UpdateOne(filter, bson.M{"$set": set})
 }
 
-func ChangeStatusStopped(id string, price float64, endTime int64) {
+func ChangeStatusStopped(id string, price float64, endTime int64, endKm float64) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
 	filter := bson.M{"_id": idObject}
+	booking, _ := GetBooking(id)
 	set := bson.M{}
 	set["status"] = "stopped"
 	set["price"] = price
 	set["end_time"] = endTime
+	set["end_km"] = endKm
+	set["total_distance"] = (endKm - booking.StartKM)
+	userTotalDist := (endKm - booking.StartKM)
 	set["updated_time"] = primitive.NewDateTimeFromTime(time.Now())
+	greenPoints := int64(userTotalDist * 5)
+	carbonSaved := userTotalDist * 80
+	profile := entity.ProfileDB{
+		GreenPoints:    greenPoints,
+		CarbonSaved:    carbonSaved,
+		TotalTravelled: userTotalDist,
+	}
+	set["green_points"] = greenPoints
+	set["carbon_saved"] = carbonSaved
+	db.UpdateUser(booking.ProfileID, profile)
 	_, err := repo.UpdateOne(filter, bson.M{"$set": set})
 	log.Println("error", err)
 }

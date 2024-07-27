@@ -206,7 +206,11 @@ func (serv *accountService) LoginUsingPassword(cred Credentials) (entity.Profile
 		trestCommon.ECLog2("login failed password hash doesn't match", err)
 		return entity.ProfileDB{}, "", err
 	}
-	tokenString, err := trestCommon.CreateToken(userData.ID.Hex(), cred.Email, "", userData.Status)
+	if cred.Role == nil {
+		cred.Role = new(string)
+		*cred.Role = "admin"
+	}
+	tokenString, err := trestCommon.CreateToken(userData.ID.Hex()+" name:"+cred.Name, *cred.Role, "", userData.Status)
 	if err != nil {
 		trestCommon.ECLog3("login failed unable to create token", err, logrus.Fields{"email": cred.Email, "name": userData.Name, "status": userData.Status})
 		return entity.ProfileDB{}, "", err

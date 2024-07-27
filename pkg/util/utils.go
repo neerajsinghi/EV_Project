@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bikeRental/pkg/entity"
+	"bikeRental/pkg/repo/generic"
 	iotbike "bikeRental/pkg/repo/iot_bike"
 	"context"
 	"encoding/json"
@@ -267,7 +268,49 @@ func CheckError(err error, w http.ResponseWriter) bool {
 	return false
 }
 
-func SendOutput(err error, w http.ResponseWriter, data interface{}) {
+type AddLog struct {
+	UserId      string
+	UserRole    string
+	ApiName     string
+	Err         string
+	Data        string
+	Request     string
+	RequestType string
+}
+
+func SendOutput(err error, w http.ResponseWriter, r *http.Request, data interface{}, apiName string) {
+
+	token := r.Header.Get("Authorization")
+	if token != "" {
+		tokens := strings.Split(token, " ")
+		if len(tokens) > 1 {
+			token = tokens[1]
+		}
+		da, lErr := commonGo.DecodeToken(token)
+		if lErr == nil {
+
+			dat, _ := json.Marshal(data)
+			logData := AddLog{
+				Request:     r.URL.String(),
+				RequestType: r.Method,
+				ApiName:     apiName,
+
+				Data: string(dat),
+			}
+			if err != nil {
+				logData.Err = err.Error()
+			}
+			// UserId:   da["userId"].(string),
+			// UserRole: da["role"].(string),
+			if da["userid"] != nil {
+				logData.UserId = da["userid"].(string)
+			}
+			if da["email"] != nil {
+				logData.UserRole = da["email"].(string)
+			}
+			generic.NewRepository("logs").InsertOne(logData)
+		}
+	}
 	if err != nil {
 		commonGo.ECLog1(err)
 		w.WriteHeader(http.StatusOK)
