@@ -154,6 +154,7 @@ func DeviceBooked(deviceID int) (string, error) {
 func DeviceReturned(deviceID int, stationID string) (string, error) {
 	set := bson.M{}
 	set["station_id"] = stationID
+	set["status"] = "available"
 	set["updated_at"] = primitive.NewDateTimeFromTime(time.Now())
 
 	return repo.UpdateOne(bson.M{"device_id": deviceID}, bson.M{"$set": set})
