@@ -21,7 +21,6 @@ import (
 	pdb "bikeRental/pkg/services/plan/pDB"
 	sdb "bikeRental/pkg/services/station/sDB"
 	"errors"
-	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -71,7 +70,7 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	if len(deviceData) == 0 {
 		return "", errors.New("device not found")
 	}
-	startKM, err := strconv.ParseFloat(deviceData[0].TotalDistance, 64)
+	startKM := deviceData[0].TotalDistanceFloat
 	if err == nil && startKM != 0 {
 		document.StartKM = startKM
 	}
@@ -252,6 +251,9 @@ func (s *service) GetMyLatestBooking(userID string) (*entity.BookingOut, error) 
 	if err != nil {
 		return nil, err
 	}
+	if len(booking) == 0 {
+		return nil, errors.New("booking not found")
+	}
 	if len(booking) > 1 {
 		for i := 1; i < len(booking); i++ {
 			if booking[i].Status == "started" {
@@ -292,7 +294,7 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 		set["vehicle_type"] = document.VehicleType
 	}
 	if document.Status == "completed" {
-		totalDistanceInt, _ := strconv.ParseFloat(devices[0].TotalDistance, 64)
+		totalDistanceInt := devices[0].TotalDistanceFloat
 
 		set["end_km"] = totalDistanceInt
 		set["total_distance"] = totalDistanceInt - booking.StartKM

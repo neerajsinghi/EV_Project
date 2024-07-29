@@ -4,6 +4,7 @@ import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/repo/generic"
 	iotbike "bikeRental/pkg/repo/iot_bike"
+	"bikeRental/pkg/services/motog"
 	"context"
 	"encoding/json"
 	"errors"
@@ -228,6 +229,7 @@ func GetDataFromPullAPI() {
 		fmt.Println(err)
 		return
 	}
+	log.Println(string(body))
 	var data response
 	err = json.Unmarshal(body, &data)
 
@@ -238,8 +240,10 @@ func GetDataFromPullAPI() {
 	var long, lat float64
 	repo := iotbike.NewProfileRepository("iotBike")
 	for i, d := range data.Data {
-		if data.Data[i].TotalDistance == "" {
+		if data.Data[i].TotalDistance == "" && data.Data[i].TotalDistanceFloat == 0 {
 			continue
+		} else if data.Data[i].TotalDistanceFloat != 0 {
+			data.Data[i].TotalDistance = strconv.FormatFloat(data.Data[i].TotalDistanceFloat, 'f', -1, 64)
 		}
 		data.Data[i].Location.Type = "Point"
 		long, _ = strconv.ParseFloat(d.Longitude, 64)
@@ -250,6 +254,16 @@ func GetDataFromPullAPI() {
 		bson.Unmarshal(conv, &updateFields)
 		filter := bson.M{"deviceId": d.DeviceId}
 		repo.UpdateOne(filter, bson.M{"$set": updateFields})
+		bikeLog := motog.BikeLog{
+			DeviceID:            data.Data[i].DeviceId,
+			DeviceName:          data.Data[i].Name,
+			Location:            data.Data[i].Location,
+			DeviceTotalDistance: data.Data[i].TotalDistanceFloat,
+			DeviceTime:          data.Data[i].LastUpdate,
+			Type:                data.Data[i].Type,
+		}
+		repoDev := generic.NewRepository("bikeLog")
+		repoDev.InsertOne(bikeLog)
 
 	}
 }

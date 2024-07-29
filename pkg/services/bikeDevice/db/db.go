@@ -3,8 +3,7 @@ package db
 import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/repo/bikeDevice"
-	bikeDB "bikeRental/pkg/services/iotBike/db"
-	vdb "bikeRental/pkg/services/vehicleType/vDB"
+	"errors"
 	"strconv"
 	"time"
 
@@ -14,41 +13,64 @@ import (
 
 type service struct{}
 
+func createPipeline(filter bson.D) bson.A {
+	pipeline := bson.A{}
+	if filter != nil {
+		pipeline = append(pipeline, bson.D{{Key: "$match", Value: filter}})
+	}
+	return append(pipeline, bson.A{
+		bson.D{
+			{Key: "$addFields", Value: bson.D{
+				{Key: "stationIdO", Value: bson.D{{Key: "$toObjectId", Value: "$station_id"}}},
+				{Key: "vehId", Value: bson.D{{Key: "$toObjectId", Value: "$vehicle_type_id"}}},
+			}},
+		},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "station"},
+					{Key: "localField", Value: "stationIdO"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "stations"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "iotBike"},
+					{Key: "localField", Value: "device_id"},
+					{Key: "foreignField", Value: "deviceId"},
+					{Key: "as", Value: "device_data"},
+				},
+			},
+		},
+		bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$device_data"}}}},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "vehicleType"},
+					{Key: "localField", Value: "vehId"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "vehicle_type"},
+				},
+			},
+		},
+		bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$vehicle_type"}}}},
+	}...)
+}
+
 // FindBikeByDeviceID implements IOtBike.
 func (s *service) FindBikeByDeviceID(deviceId string) ([]entity.DeviceInfo, error) {
 	deviceIdIn, _ := strconv.Atoi(deviceId)
-	data, err := repo.Find(bson.M{"device_id": deviceIdIn}, bson.M{})
-	if err != nil {
-		return nil, err
-	}
-	vehicleTypeIDs := make([]primitive.ObjectID, 0)
-	deviceIDs := make([]int, 0)
-
-	for _, v := range data {
-		vIDObj, _ := primitive.ObjectIDFromHex(v.VehicleTypeID)
-		vehicleTypeIDs = append(vehicleTypeIDs, vIDObj)
-		deviceIDs = append(deviceIDs, v.DeviceID)
-	}
-	vehicleTypeList, err := vdb.GetVehicleType(vehicleTypeIDs)
-	if err != nil {
-		return nil, err
-	}
-	deviceList, err := bikeDB.GetBike(deviceIDs)
+	pipeline := createPipeline(bson.D{{Key: "device_id", Value: deviceIdIn}})
+	data, err := repo.Aggregate(pipeline)
 	if err != nil {
 		return nil, err
 	}
 	for i, v := range data {
-		for _, vt := range vehicleTypeList {
-			if v.VehicleTypeID == vt.ID.Hex() {
-				data[i].VehicleType = &vt
-				break
-			}
-		}
-		for _, d := range deviceList {
-			if v.DeviceID == d.DeviceId {
-				data[i].DeviceData = &d
-				break
-			}
+		if len(v.Stations) > 0 {
+			data[i].Station = &v.Stations[0]
 		}
 	}
 	return data, nil
@@ -67,6 +89,10 @@ func NewService() IOtBike {
 func (s *service) AddBikeDevice(document entity.DeviceInfo) (string, error) {
 	document.ID = primitive.NewObjectID()
 	document.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
+	device, _ := repo.Find(bson.M{"device_id": document.DeviceID}, bson.M{})
+	if len(device) > 0 {
+		return "", errors.New("device already exists")
+	}
 	return repo.InsertOne(document)
 }
 
@@ -100,41 +126,17 @@ func (s *service) DeleteBikeDevice(id string) error {
 }
 
 func (s *service) FindAll() ([]entity.DeviceInfo, error) {
-	data, err := repo.Find(bson.M{}, bson.M{})
-	if err != nil {
-		return nil, err
-	}
-	vehicleTypeIDs := make([]primitive.ObjectID, 0)
-	deviceIDs := make([]int, 0)
-	for _, v := range data {
-		vIDObj, _ := primitive.ObjectIDFromHex(v.VehicleTypeID)
-		vehicleTypeIDs = append(vehicleTypeIDs, vIDObj)
-		deviceIDs = append(deviceIDs, v.DeviceID)
-	}
-	vehicleTypeList, err := vdb.GetVehicleType(vehicleTypeIDs)
-	if err != nil {
-		return nil, err
-	}
-	deviceList, err := bikeDB.GetBike(deviceIDs)
+	pipeline := createPipeline(nil)
+
+	data, err := repo.Aggregate(pipeline)
 	if err != nil {
 		return nil, err
 	}
 	for i, v := range data {
-		for _, vt := range vehicleTypeList {
-			if v.VehicleTypeID == vt.ID.Hex() {
-				data[i].VehicleType = &vt
-				break
-			}
+		if len(v.Stations) > 0 {
+			data[i].Station = &v.Stations[0]
 		}
-		for _, d := range deviceList {
-			if v.DeviceID == d.DeviceId {
-				data[i].DeviceData = &d
-				break
-			}
-		}
-
 	}
-
 	return data, nil
 }
 
@@ -158,38 +160,14 @@ func DeviceReturned(deviceID int, stationID string) (string, error) {
 }
 
 func (*service) FindBikeByStation(stationID string) ([]entity.DeviceInfo, error) {
-	data, err := repo.Find(bson.M{"station_id": stationID}, bson.M{})
-	if err != nil {
-		return nil, err
-	}
-	vehicleTypeIDs := make([]primitive.ObjectID, 0)
-	deviceIDs := make([]int, 0)
-
-	for _, v := range data {
-		vIDObj, _ := primitive.ObjectIDFromHex(v.VehicleTypeID)
-		vehicleTypeIDs = append(vehicleTypeIDs, vIDObj)
-		deviceIDs = append(deviceIDs, v.DeviceID)
-	}
-	vehicleTypeList, err := vdb.GetVehicleType(vehicleTypeIDs)
-	if err != nil {
-		return nil, err
-	}
-	deviceList, err := bikeDB.GetBike(deviceIDs)
+	pipeline := createPipeline(bson.D{{Key: "station_id", Value: stationID}})
+	data, err := repo.Aggregate(pipeline)
 	if err != nil {
 		return nil, err
 	}
 	for i, v := range data {
-		for _, vt := range vehicleTypeList {
-			if v.VehicleTypeID == vt.ID.Hex() {
-				data[i].VehicleType = &vt
-				break
-			}
-		}
-		for _, d := range deviceList {
-			if v.DeviceID == d.DeviceId {
-				data[i].DeviceData = &d
-				break
-			}
+		if len(v.Stations) > 0 {
+			data[i].Station = &v.Stations[0]
 		}
 	}
 	return data, nil

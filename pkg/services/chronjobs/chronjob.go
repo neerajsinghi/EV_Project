@@ -12,7 +12,6 @@ import (
 	wdb "bikeRental/pkg/services/wallet/db"
 	"fmt"
 	"sort"
-	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -120,7 +119,7 @@ func CheckBooking() {
 				motog.ImmoblizeDevice(1, booking.BikeWithDevice.Name)
 			}
 			//stop booking
-			totalDistance, _ := strconv.ParseFloat(booking.BikeWithDevice.TotalDistance, 64)
+			totalDistance := booking.BikeWithDevice.TotalDistanceFloat
 			bdb.ChangeStatusStopped(booking.ID.Hex(), wallet.TotalBalance, time.Now().Unix(), totalDistance)
 		}
 	}

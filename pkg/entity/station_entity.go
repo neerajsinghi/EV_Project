@@ -39,6 +39,7 @@ type DeviceInfo struct {
 	VehicleType         *VehicleTypeDB     `bson:"vehicle_type" json:"vehicleType,omitempty"`
 	DeviceData          *IotBikeDB         `bson:"device_data" json:"deviceData,omitempty"`
 	Station             *StationDB         `bson:"station" json:"station,omitempty"`
+	Stations            []StationDB        `bson:"stations" json:"stations,omitempty"`
 	Description         string             `bson:"description" json:"description,omitempty"`
 	CreatedTime         primitive.DateTime `bson:"created_time" json:"createdTime,omitempty"`
 	InsuranceDate       time.Time          `bson:"insurance_date" json:"insuranceDate,omitempty"`
