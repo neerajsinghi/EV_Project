@@ -737,7 +737,7 @@ type VehicleData struct {
 
 func GetVehicleData(id int) ([]VehicleData, error) {
 	pipeline := bson.A{
-		bson.D{{Key: "$match", Value: bson.D{{Key: "deviceId", Value: 310823018}}}},
+		bson.D{{Key: "$match", Value: bson.D{{Key: "deviceId", Value: id}}}},
 		bson.D{
 			{Key: "$lookup",
 				Value: bson.D{
