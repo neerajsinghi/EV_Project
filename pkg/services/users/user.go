@@ -16,14 +16,14 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	userType := r.URL.Query().Get("type")
 	data, err := service.GetUsers(userType)
-	utils.SendOutput(err, w, data)
+	utils.SendOutput(err, w, r, data, nil, "GetUsers")
 }
 
 func GetUserById(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	data, err := service.GetUserById(id)
-	utils.SendOutput(err, w, data)
+	utils.SendOutput(err, w, r, data, nil, "GetUserById")
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +35,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := service.UpdateUser(id, user)
-	utils.SendOutput(err, w, data)
+	utils.SendOutput(err, w, r, data, user, "UpdateUser")
 
 }
 
@@ -52,14 +52,14 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	_, err := service.DeleteUser(id)
-	utils.SendOutput(err, w, nil)
+	utils.SendOutput(err, w, r, nil, nil, "DeleteUser")
 }
 
 func DeleteUserPermanently(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := service.DeleteUserPermanently(id)
-	utils.SendOutput(err, w, nil)
+	utils.SendOutput(err, w, r, nil, nil, "DeleteUserPermanently")
 }
 
 func RemovePlan(w http.ResponseWriter, r *http.Request) {
@@ -67,5 +67,5 @@ func RemovePlan(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	planID := mux.Vars(r)["plan_id"]
 	data, err := service.RemovePlan(id, planID)
-	utils.SendOutput(err, w, data)
+	utils.SendOutput(err, w, r, data, nil, "RemovePlan")
 }

@@ -2,7 +2,9 @@ package utils
 
 import (
 	"bikeRental/pkg/entity"
+	"bikeRental/pkg/repo/generic"
 	iotbike "bikeRental/pkg/repo/iot_bike"
+	"bikeRental/pkg/services/motog"
 	"context"
 	"encoding/json"
 	"errors"
@@ -227,6 +229,7 @@ func GetDataFromPullAPI() {
 		fmt.Println(err)
 		return
 	}
+	log.Println(string(body))
 	var data response
 	err = json.Unmarshal(body, &data)
 
@@ -237,8 +240,10 @@ func GetDataFromPullAPI() {
 	var long, lat float64
 	repo := iotbike.NewProfileRepository("iotBike")
 	for i, d := range data.Data {
-		if data.Data[i].TotalDistance == "" {
+		if data.Data[i].TotalDistance == "" && data.Data[i].TotalDistanceFloat == 0 {
 			continue
+		} else if data.Data[i].TotalDistanceFloat != 0 {
+			data.Data[i].TotalDistance = strconv.FormatFloat(data.Data[i].TotalDistanceFloat, 'f', -1, 64)
 		}
 		data.Data[i].Location.Type = "Point"
 		long, _ = strconv.ParseFloat(d.Longitude, 64)
@@ -249,6 +254,16 @@ func GetDataFromPullAPI() {
 		bson.Unmarshal(conv, &updateFields)
 		filter := bson.M{"deviceId": d.DeviceId}
 		repo.UpdateOne(filter, bson.M{"$set": updateFields})
+		bikeLog := motog.BikeLog{
+			DeviceID:            data.Data[i].DeviceId,
+			DeviceName:          data.Data[i].Name,
+			Location:            data.Data[i].Location,
+			DeviceTotalDistance: data.Data[i].TotalDistanceFloat,
+			DeviceTime:          data.Data[i].LastUpdate,
+			Type:                data.Data[i].Type,
+		}
+		repoDev := generic.NewRepository("bikeLog")
+		repoDev.InsertOne(bikeLog)
 
 	}
 }
@@ -267,7 +282,53 @@ func CheckError(err error, w http.ResponseWriter) bool {
 	return false
 }
 
-func SendOutput(err error, w http.ResponseWriter, data interface{}) {
+type AddLog struct {
+	UserId      string
+	UserRole    string
+	ApiName     string
+	Err         string
+	Data        string
+	Request     string
+	RequestType string
+	Body        string
+}
+
+func SendOutput(err error, w http.ResponseWriter, r *http.Request, data, body interface{}, apiName string) {
+
+	token := r.Header.Get("Authorization")
+	if token != "" && (r.Method != "GET" || body != nil) {
+		tokens := strings.Split(token, " ")
+		if len(tokens) > 1 {
+			token = tokens[1]
+		}
+		da, lErr := commonGo.DecodeToken(token)
+		if lErr == nil {
+
+			dat, _ := json.Marshal(data)
+			logData := AddLog{
+				Request:     r.URL.String(),
+				RequestType: r.Method,
+				ApiName:     apiName,
+
+				Data: string(dat),
+			}
+			if err != nil {
+				logData.Err = err.Error()
+			}
+			if body != nil {
+				dat, _ := json.Marshal(body)
+
+				logData.Body = string(dat)
+			}
+			if da["userid"] != nil {
+				logData.UserId = da["userid"].(string)
+			}
+			if da["email"] != nil {
+				logData.UserRole = da["email"].(string)
+			}
+			generic.NewRepository("logs").InsertOne(logData)
+		}
+	}
 	if err != nil {
 		commonGo.ECLog1(err)
 		w.WriteHeader(http.StatusOK)

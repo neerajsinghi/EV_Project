@@ -20,7 +20,9 @@ type IotBikeDB struct {
 	PosId                    int      `bson:"posId" json:"posId"`
 	Speed                    string   `bson:"speed" json:"speed"`
 	Status                   string   `bson:"status" json:"status"`
-	TotalDistance            string   `bson:"totalDistance" json:"totalDistance"`
+	DailyDistance            float64  `bson:"daily_distance" json:"daily_distance"`
+	TotalDistanceFloat       float64  `bson:"totalDistanceInt" json:"totalDistance"`
+	TotalDistance            string   `bson:"totalDistance" json:"totalDistanceS"`
 	Type                     string   `bson:"type" json:"type"`
 	Valid                    int      `bson:"valid" json:"valid"`
 }

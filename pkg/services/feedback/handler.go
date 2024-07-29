@@ -3,6 +3,7 @@ package feedback
 import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/services/feedback/feedback"
+	utils "bikeRental/pkg/util"
 	"encoding/json"
 	"net/http"
 
@@ -13,8 +14,7 @@ var feed = feedback.New()
 
 // AddFeedback adds a feedback to the database
 func AddFeedback(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	feedback, err := parseFeed(r)
 	if err != nil {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
@@ -22,42 +22,22 @@ func AddFeedback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, err := feed.AddFeedback(feedback)
-	if err != nil {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(entity.Response{Status: false, Error: err.Error()})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(entity.Response{Status: true, Data: id})
+	utils.SendOutput(err, w, r, id, feedback, "AddFeedback")
 }
 
 // GetFeedbacks returns all feedbacks
 func GetFeedbacks(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	data, err := feed.GetFeedbacks()
-	if err != nil {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(entity.Response{Status: false, Error: err.Error()})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(entity.Response{Status: true, Data: data})
+	utils.SendOutput(err, w, r, data, nil, "GetFeedbacks")
 }
 
 // DeleteFeedback deletes a feedback
 func DeleteFeedback(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := feed.DeleteFeedback(id)
-	if err != nil {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(entity.Response{Status: false, Error: err.Error()})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(entity.Response{Status: true})
+	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteFeedback")
 }
 
 func parseFeed(r *http.Request) (entity.Feedback, error) {

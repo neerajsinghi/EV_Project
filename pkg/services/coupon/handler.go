@@ -3,14 +3,13 @@ package coupon
 import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/services/coupon/cdb"
+	utils "bikeRental/pkg/util"
 	"encoding/json"
 	"net/http"
-	"time"
 
 	trestCommon "github.com/Trestx-technology/trestx-common-go-lib"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -18,16 +17,7 @@ var coupon = cdb.NewCoupon()
 
 // AddCoupon adds a new coupon
 func AddCoupon(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	defer func() {
-		trestCommon.DLogMap("brand updated", logrus.Fields{
-			"duration": time.Since(startTime),
-		})
-	}()
-	trestCommon.DLogMap("setting brand", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	couponD, err := getCoupon(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get coupon"))
@@ -36,27 +26,12 @@ func AddCoupon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := coupon.AddCoupon(couponD)
-	if err != nil {
-		trestCommon.ECLog1(errors.Wrapf(err, "unable to add coupon"))
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to add coupon"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+	utils.SendOutput(err, w, r, data, couponD, "AddCoupon")
 }
 
 // UpdateCoupon updates a coupon
 func UpdateCoupon(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	defer func() {
-		trestCommon.DLogMap("brand updated", logrus.Fields{
-			"duration": time.Since(startTime),
-		})
-	}()
-	trestCommon.DLogMap("setting brand", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
+	utils.SetOutput(w)
 	couponD, err := getCoupon(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get coupon"))
@@ -66,59 +41,22 @@ func UpdateCoupon(w http.ResponseWriter, r *http.Request) {
 	}
 	id := mux.Vars(r)["id"]
 	data, err := coupon.UpdateCoupon(id, couponD)
-	if err != nil {
-		trestCommon.ECLog1(errors.Wrapf(err, "unable to update coupon"))
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to update coupon"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+	utils.SendOutput(err, w, r, data, couponD, "UpdateCoupon")
 }
 
 // DeleteCoupon deletes a coupon
 func DeleteCoupon(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	defer func() {
-		trestCommon.DLogMap("brand updated", logrus.Fields{
-			"duration": time.Since(startTime),
-		})
-	}()
-	trestCommon.DLogMap("setting brand", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
+	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := coupon.DeleteCoupon(id)
-	if err != nil {
-		trestCommon.ECLog1(err)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to delete coupon"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": ""})
+	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteCoupon")
 }
 
 // GetCoupon gets a coupon
 func GetCoupons(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	defer func() {
-		trestCommon.DLogMap("brand updated", logrus.Fields{
-			"duration": time.Since(startTime),
-		})
-	}()
-	trestCommon.DLogMap("setting brand", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
+	utils.SetOutput(w)
 	data, err := coupon.GetCoupon()
-	if err != nil {
-		trestCommon.ECLog1(err)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to get coupon"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+	utils.SendOutput(err, w, r, data, nil, "GetCoupon")
 }
 
 func getCoupon(r *http.Request) (entity.CouponDB, error) {

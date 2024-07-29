@@ -9,4 +9,16 @@ var statusRoutes = Routes{
 		"/statistics",
 		status.Statistics,
 	},
+	Route{
+		"vehicle data",
+		"GET",
+		"/vehicle/data/{id}",
+		status.GetVehicleDataHand,
+	},
+	Route{
+		"immobilize vehicle",
+		"GET",
+		"/vehicle/immobilize/{id}",
+		status.ImmobilizeDevHand,
+	},
 }

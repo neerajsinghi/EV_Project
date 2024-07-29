@@ -33,4 +33,10 @@ var planRoutes = Routes{
 		"/plan/{id}",
 		plan.DeletePlan,
 	},
+	Route{
+		"Get Deposit",
+		"GET",
+		"/deposit",
+		plan.GetDeposit,
+	},
 }

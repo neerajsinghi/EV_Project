@@ -56,9 +56,9 @@ func CheckBooking() {
 		sort.Slice(planList, func(i, j int) bool {
 			return planList[i].EndingMinutes < planList[j].EndingMinutes
 		})
-		for _, plan := range planList {
+		for i, plan := range planList {
 			if plan.EndingMinutes != 0 {
-				if walletAmount <= plan.Price {
+				if walletAmount == plan.Price {
 					// Calculate the time this plan can provide
 
 					// Add the time to the total timeSpent
@@ -67,18 +67,24 @@ func CheckBooking() {
 
 					walletAmount -= plan.Price
 
-					// If there's no money left, stop iterating
-					if walletAmount <= 0 {
-						break
-					}
+					break
+
+				} else if i > 0 && (planList[i-1].Price < walletAmount && walletAmount < plan.Price) {
+					timeSpent = planList[i-1].EndingMinutes
+					walletAmount -= planList[i-1].Price
+					break
 				}
-			} else {
+			} else if plan.EveryXMinutes != 0 {
 				extendedPrice = plan.Price
 				extendedTime = plan.EveryXMinutes
 			}
 		}
 		if walletAmount > 0 {
-			timeSpent += int(walletAmount/extendedPrice) * extendedTime
+			timeEx := int(walletAmount/extendedPrice) * extendedTime
+			if timeEx >= 1 {
+				timeSpent += timeEx
+				walletAmount -= float64(timeSpent/extendedTime) * (extendedPrice)
+			}
 		}
 
 		bdb.AddTimeRemaining(booking.ID.Hex(), timeSpent-int(time.Now().Unix()/60)+int(booking.StartTime/60))
@@ -104,7 +110,7 @@ func CheckBooking() {
 			walletN := &entity.WalletS{
 				ID:          primitive.NewObjectID(),
 				UserID:      booking.ProfileID,
-				UsedMoney:   wallet.TotalBalance,
+				UsedMoney:   wallet.TotalBalance - walletAmount,
 				BookingID:   booking.ID.Hex(),
 				Description: "Time expired for booking",
 			}
@@ -113,7 +119,8 @@ func CheckBooking() {
 				motog.ImmoblizeDevice(1, booking.BikeWithDevice.Name)
 			}
 			//stop booking
-			bdb.ChangeStatusStopped(booking.ID.Hex(), wallet.TotalBalance, time.Now().Unix())
+			totalDistance := booking.BikeWithDevice.TotalDistanceFloat
+			bdb.ChangeStatusStopped(booking.ID.Hex(), wallet.TotalBalance, time.Now().Unix(), totalDistance)
 		}
 	}
 
@@ -127,10 +134,24 @@ func CheckAndUpdateOnGoingRides() {
 	}
 	for _, booking := range bookings {
 		booked := entity.BookedBikesDB{
-			BookingID: booking.ID.Hex(),
-			UserID:    booking.ProfileID,
-			OnGoing:   true,
-			Booking:   booking,
+			BookingID:   booking.ID.Hex(),
+			UserID:      booking.ProfileID,
+			OnGoing:     true,
+			Booking:     booking,
+			Coordinates: booking.BikeWithDevice.Location.Coordinates,
+		}
+		if booking.StartingStation != nil {
+			booked.StartingStation = booking.StartingStation.Name
+		}
+		if booking.EndingStation != nil {
+			booked.EndStation = booking.EndingStation.Name
+		}
+		if booking.Profile != nil {
+			booked.UserName = booking.Profile.Name
+		}
+		if booking.BikeWithDevice != nil {
+			booked.DeviceName = booking.BikeWithDevice.Name
+			booked.DeviceId = booking.BikeWithDevice.DeviceId
 		}
 		bookedlogic.AddBookedBike(booked)
 	}

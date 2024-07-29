@@ -3,6 +3,7 @@ package faqdb
 import (
 	"bikeRental/pkg/entity"
 	faqdb "bikeRental/pkg/services/faq/faqDB"
+	utils "bikeRental/pkg/util"
 	"encoding/json"
 	"net/http"
 
@@ -13,8 +14,7 @@ import (
 var service = faqdb.NewService()
 
 func AddFaq(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	faq, err := parseFaq(r)
 	if err != nil {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
@@ -25,25 +25,11 @@ func AddFaq(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := service.AddFaq(faq)
-	if err != nil {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{
-			"status": false,
-			"error":  "Unable to add FAQ",
-		})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{
-		"status": true,
-		"error":  "",
-		"data":   data,
-	})
+	utils.SendOutput(err, w, r, data, faq, "AddFaq")
 }
 
 func UpdateFaq(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	faq, err := parseFaq(r)
 	if err != nil {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
@@ -55,59 +41,19 @@ func UpdateFaq(w http.ResponseWriter, r *http.Request) {
 	}
 	id := mux.Vars(r)["id"]
 	data, err := service.UpdateFaq(id, faq)
-	if err != nil {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{
-			"status": false,
-			"error":  "Unable to update FAQ",
-		})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{
-		"status": true,
-		"error":  "",
-		"data":   data,
-	})
+	utils.SendOutput(err, w, r, data, faq, "UpdateFaq")
 }
 func DeleteFaq(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	id := mux.Vars(r)["id"]
 	err := service.DeleteFaq(id)
-	if err != nil {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{
-			"status": false,
-			"error":  "Unable to delete FAQ",
-		})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{
-		"status": true,
-		"error":  "",
-	})
+	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteFaq")
 }
 
 func GetAllFaq(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	data, err := service.GetAllFaq()
-	if err != nil {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{
-			"status": false,
-			"error":  "Unable to get FAQ",
-		})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{
-		"status": true,
-		"error":  "",
-		"data":   data,
-	})
+	utils.SendOutput(err, w, r, data, nil, "GetAllFaq")
 }
 func parseFaq(r *http.Request) (entity.FAQDB, error) {
 	var faq entity.FAQDB

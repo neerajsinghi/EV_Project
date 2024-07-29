@@ -39,4 +39,10 @@ var bookingRoutes = Routes{
 		"/booking/{id}",
 		booking.GetBookingByID,
 	},
+	Route{
+		"Get Booking By ID",
+		"GET",
+		"/resume/booking/{id}",
+		booking.ResumeStoppedBooking,
+	},
 }

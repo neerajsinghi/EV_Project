@@ -21,7 +21,6 @@ import (
 	pdb "bikeRental/pkg/services/plan/pDB"
 	sdb "bikeRental/pkg/services/station/sDB"
 	"errors"
-	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -71,7 +70,7 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	if len(deviceData) == 0 {
 		return "", errors.New("device not found")
 	}
-	startKM, err := strconv.ParseFloat(deviceData[0].TotalDistance, 64)
+	startKM := deviceData[0].TotalDistanceFloat
 	if err == nil && startKM != 0 {
 		document.StartKM = startKM
 	}
@@ -88,6 +87,7 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	}
 
 	document.StartingStation = &station
+
 	if document.Plan == nil || document.Plan.ID.Hex() == "" {
 		return "", errors.New("plan not found")
 	}
@@ -95,6 +95,7 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	plan, err := pdb.NewService().GetPlan(document.Plan.ID.Hex())
 	if err == nil {
 		document.Plan = &plan
+		document.VehicleType = plan.VehicleType
 		document.City = plan.City
 		document.BookingType = string(plan.Type)
 		if plan.Type == "hourly" {
@@ -250,6 +251,9 @@ func (s *service) GetMyLatestBooking(userID string) (*entity.BookingOut, error) 
 	if err != nil {
 		return nil, err
 	}
+	if len(booking) == 0 {
+		return nil, errors.New("booking not found")
+	}
 	if len(booking) > 1 {
 		for i := 1; i < len(booking); i++ {
 			if booking[i].Status == "started" {
@@ -290,11 +294,11 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 		set["vehicle_type"] = document.VehicleType
 	}
 	if document.Status == "completed" {
-		totalDistanceInt, _ := strconv.ParseFloat(devices[0].TotalDistance, 64)
+		totalDistanceInt := devices[0].TotalDistanceFloat
 
 		set["end_km"] = totalDistanceInt
 		set["total_distance"] = totalDistanceInt - booking.StartKM
-		userTotalDist := (totalDistanceInt - booking.StartKM) / 1000
+		userTotalDist := (totalDistanceInt - booking.StartKM)
 		greenPoints := int64(userTotalDist * 5)
 		carbonSaved := userTotalDist * 80
 		profile := entity.ProfileDB{
@@ -323,6 +327,8 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 					price := float64(0)
 					maxPrice := float64(0)
 					maxTime := 0
+					extendedPrice := 0.0
+					extendedTime := 0
 					sort.Slice(plan, func(i, j int) bool {
 						return plan[i].EndingMinutes < plan[j].EndingMinutes
 					})
@@ -338,16 +344,17 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 							if maxTime < p.EndingMinutes {
 								maxTime = p.EndingMinutes
 							}
+						} else if p.EveryXMinutes != 0 {
+							extendedPrice = p.Price
+							extendedTime = p.EveryXMinutes
 						}
 					}
 					if price == 0 {
 						price = maxPrice
 						timeBooked -= maxTime
-						for _, p := range plan {
-							if p.EndingMinutes == 0 {
-								timeMultiplier := float64(timeBooked / p.EveryXMinutes)
-								price += p.Price * timeMultiplier
-							}
+						for timeBooked > 0 {
+							price += extendedPrice
+							timeBooked -= extendedTime
 						}
 					}
 					if booking.CouponCode != "" {
@@ -452,14 +459,28 @@ func AddTimeRemaining(id string, timeRemaining int) {
 	repo.UpdateOne(filter, bson.M{"$set": set})
 }
 
-func ChangeStatusStopped(id string, price float64, endTime int64) {
+func ChangeStatusStopped(id string, price float64, endTime int64, endKm float64) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
 	filter := bson.M{"_id": idObject}
+	booking, _ := GetBooking(id)
 	set := bson.M{}
 	set["status"] = "stopped"
 	set["price"] = price
 	set["end_time"] = endTime
+	set["end_km"] = endKm
+	set["total_distance"] = (endKm - booking.StartKM)
+	userTotalDist := (endKm - booking.StartKM)
 	set["updated_time"] = primitive.NewDateTimeFromTime(time.Now())
+	greenPoints := int64(userTotalDist * 5)
+	carbonSaved := userTotalDist * 80
+	profile := entity.ProfileDB{
+		GreenPoints:    greenPoints,
+		CarbonSaved:    carbonSaved,
+		TotalTravelled: userTotalDist,
+	}
+	set["green_points"] = greenPoints
+	set["carbon_saved"] = carbonSaved
+	db.UpdateUser(booking.ProfileID, profile)
 	_, err := repo.UpdateOne(filter, bson.M{"$set": set})
 	log.Println("error", err)
 }

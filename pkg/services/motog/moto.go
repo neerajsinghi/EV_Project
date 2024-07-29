@@ -2,6 +2,7 @@ package motog
 
 import (
 	"bikeRental/pkg/entity"
+	"bikeRental/pkg/repo/generic"
 	iotbike "bikeRental/pkg/repo/iot_bike"
 	"encoding/json"
 	"fmt"
@@ -76,7 +77,7 @@ type VehicleData struct {
 	Current        int     `json:"current"`
 	ChargeStatus   int     `json:"chargestatus"`
 	DTE            int     `json:"DTE"`
-	Odometer       int     `json:"odometer"`
+	Odometer       float64 `json:"odometer"`
 	Soc            float64 `json:"soc"`
 	IgnitionStatus int     `json:"ignitionstatus"`
 	Latitude       float64 `json:"latitude"`
@@ -84,6 +85,14 @@ type VehicleData struct {
 	Longitude      float64 `json:"longitude"`
 	Timestamp      string  `json:"timestamp"`
 	VINNo          string  `json:"VIN No"`
+}
+type BikeLog struct {
+	DeviceID            int
+	DeviceName          string
+	Location            entity.Location
+	DeviceTotalDistance float64
+	DeviceTime          string
+	Type                string
 }
 
 func AddDeviceMoto() {
@@ -170,7 +179,8 @@ func AddDeviceMoto() {
 			iodDevice.Location.Coordinates = []float64{dataVehicleData.Longitude, dataVehicleData.Latitude}
 			iodDevice.Ignition = strconv.Itoa(dataVehicleData.IgnitionStatus)
 			iodDevice.LastUpdate = dataVehicleData.Timestamp
-			iodDevice.TotalDistance = strconv.Itoa(dataVehicleData.Odometer)
+			iodDevice.TotalDistanceFloat = dataVehicleData.Odometer
+			iodDevice.TotalDistance = strconv.FormatFloat(dataVehicleData.Odometer, 'f', -1, 64)
 			iodDevice.Speed = strconv.Itoa(dataVehicleData.MaxSpeed)
 			iodDevice.Type = "moto"
 			var updateFields bson.M
@@ -180,6 +190,16 @@ func AddDeviceMoto() {
 			repo := iotbike.NewProfileRepository("iotBike")
 
 			repo.UpdateOne(filter, bson.M{"$set": updateFields})
+			bikeLog := BikeLog{
+				DeviceID:            iodDevice.DeviceId,
+				DeviceName:          iodDevice.Name,
+				Location:            iodDevice.Location,
+				DeviceTotalDistance: iodDevice.TotalDistanceFloat,
+				DeviceTime:          dataVehicleData.Timestamp,
+				Type:                iodDevice.Type,
+			}
+			repoDev := generic.NewRepository("bikeLog")
+			repoDev.InsertOne(bikeLog)
 		}
 	}
 }

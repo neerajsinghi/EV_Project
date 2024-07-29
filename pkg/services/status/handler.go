@@ -1,27 +1,17 @@
 package status
 
 import (
-	"encoding/json"
+	utils "bikeRental/pkg/util"
 	"net/http"
+	"strconv"
 	"time"
 
-	trestCommon "github.com/Trestx-technology/trestx-common-go-lib"
-	"github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/gorilla/mux"
 )
 
 // Logic is a function that returns the statistics of the users, stations and chargers.
 func Statistics(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	defer func() {
-		trestCommon.DLogMap("brand updated", logrus.Fields{
-			"duration": time.Since(startTime),
-		})
-	}()
-	trestCommon.DLogMap("setting brand", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	utils.SetOutput(w)
 	startDate := r.URL.Query().Get("startDate")
 	endDate := r.URL.Query().Get("endDate")
 	city := r.URL.Query().Get("city")
@@ -31,12 +21,21 @@ func Statistics(w http.ResponseWriter, r *http.Request) {
 	end, _ := time.Parse("2006-01-02", endDate)
 
 	data, err := Logic(start, end, city, service)
-	if err != nil {
-		trestCommon.ECLog1(err)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Unable to get stations"})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
+	utils.SendOutput(err, w, r, data, nil, "Statistics")
+}
+
+func GetVehicleDataHand(w http.ResponseWriter, r *http.Request) {
+	utils.SetOutput(w)
+	id := mux.Vars(r)["id"]
+	idi, _ := strconv.Atoi(id)
+	data, err := GetVehicleData(idi)
+	utils.SendOutput(err, w, r, data, nil, "GetVehicleData")
+}
+
+func ImmobilizeDevHand(w http.ResponseWriter, r *http.Request) {
+	utils.SetOutput(w)
+	id := mux.Vars(r)["id"]
+	idi, _ := strconv.Atoi(id)
+	err := ImmobilizeDevice(idi)
+	utils.SendOutput(err, w, r, "immobilized successfully", id, "ImmobilizeDevice")
 }
