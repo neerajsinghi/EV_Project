@@ -101,11 +101,8 @@ func (s *service) UpdateBikeDevice(id string, document entity.DeviceInfo) (strin
 	document.ID = idObject
 	set := bson.M{}
 
-	if document.StationID != nil {
-		set["station_id"] = document.StationID
-
-	} else {
-		set["station_id"] = ""
+	if document.StationID != nil && *document.StationID != "" {
+		set["station_id"] = *document.StationID
 	}
 	if document.Status != "" {
 		set["status"] = document.Status
