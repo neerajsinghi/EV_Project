@@ -59,17 +59,7 @@ func (s *service) InsertOne(document entity.WalletS) (WalletTotal, error) {
 		}
 		document.Booking = booking
 	}
-	if document.PlanID != "" {
-		plan, err := pdb.NewService().GetPlan(document.PlanID)
-		if err != nil {
-			return WalletTotal{}, err
-		}
-		document.Plan = &plan
-		profile := entity.ProfileDB{
-			PlanID: &document.PlanID,
-		}
-		udb.NewService().UpdateUser(document.UserID, profile)
-	}
+
 	document.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
 
 	_, err = repo.InsertOne(document)

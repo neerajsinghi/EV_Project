@@ -5,9 +5,6 @@ import (
 	"futureEVChronJobs/pkg/entity"
 	"futureEVChronJobs/pkg/repo/booking"
 	"futureEVChronJobs/pkg/repo/profile"
-	"futureEVChronJobs/pkg/services/notifications/notify"
-	pdb "futureEVChronJobs/pkg/services/plan/pDB"
-	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -182,104 +179,104 @@ func RemovePlan(userId string) (string, error) {
 	return repo.UpdateOne(filter, bson.M{"$set": set})
 }
 
-func (s *service) UpdateUser(id string, user entity.ProfileDB) (string, error) {
-	idObject, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.M{"_id": idObject}
-	userN, err := repo.FindOne(filter, bson.M{})
-	if err != nil {
-		return "", err
-	}
-	set := bson.M{}
-	if user.Name != "" {
-		set["name"] = user.Name
-	}
-	if user.CountryCode != nil && *user.CountryCode != "" {
-		set["country_code"] = *user.CountryCode
-	}
+// func (s *service) UpdateUser(id string, user entity.ProfileDB) (string, error) {
+// 	idObject, _ := primitive.ObjectIDFromHex(id)
+// 	filter := bson.M{"_id": idObject}
+// 	userN, err := repo.FindOne(filter, bson.M{})
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	set := bson.M{}
+// 	if user.Name != "" {
+// 		set["name"] = user.Name
+// 	}
+// 	if user.CountryCode != nil && *user.CountryCode != "" {
+// 		set["country_code"] = *user.CountryCode
+// 	}
 
-	if user.UserBlocked != nil {
-		set["user_blocked"] = user.UserBlocked
-		set["blocked_by"] = user.BlockedBy
-		set["blocked_time"] = time.Now()
-		set["block_reason"] = user.BlockReason
-	}
-	if user.IDFrontImage != "" {
-		set["id_front_image"] = user.IDFrontImage
-	}
-	if user.IDBackImage != "" {
-		set["id_back_image"] = user.IDBackImage
-	}
-	if user.DLFrontImage != "" {
-		set["dl_front_image"] = user.DLFrontImage
-	}
-	if user.DLBackImage != "" {
-		set["dl_back_image"] = user.DLBackImage
-	}
-	if user.PlanActive != nil {
-		set["plan_active"] = user.PlanActive
-	}
-	if user.Access != nil {
-		set["access"] = user.Access
-	}
-	if user.DOB != "" {
-		set["dob"] = user.DOB
-	}
-	if user.IDVerified != nil {
-		set["id_verified"] = *user.IDVerified
-		if *user.IDVerified && userN.FirebaseToken != nil {
-			notify.NewService().SendNotification("ID Verified", "Your ID has been verified", userN.ID.Hex(), "idVerified", *userN.FirebaseToken)
-		}
-	}
-	if user.DLVerified != nil {
-		set["dl_verified"] = *user.DLVerified
-		if *user.DLVerified && userN.FirebaseToken != nil {
-			notify.NewService().SendNotification("DL Verified", "Your DL has been verified", userN.ID.Hex(), "idVerified", *userN.FirebaseToken)
-		}
-	}
-	if user.Gender != nil && *user.Gender != "" {
-		set["gender"] = *user.Gender
-	}
-	if user.UrlToProfileImage != nil && *user.UrlToProfileImage != "" {
-		set["url_to_profile_image"] = user.UrlToProfileImage
-	}
-	if user.Role != nil {
-		set["role"] = *user.Role
-	}
-	if user.StatusBool != nil {
-		set["status_bool"] = *user.StatusBool
-	}
-	if user.FirebaseToken != nil {
-		set["firebase_token"] = *user.FirebaseToken
-	}
-	if user.ServiceType != "" {
-		set["service_type"] = user.ServiceType
-	}
-	inc := bson.M{}
-	inc["green_points"] = user.GreenPoints
-	inc["carbon_saved"] = user.CarbonSaved
+// 	if user.UserBlocked != nil {
+// 		set["user_blocked"] = user.UserBlocked
+// 		set["blocked_by"] = user.BlockedBy
+// 		set["blocked_time"] = time.Now()
+// 		set["block_reason"] = user.BlockReason
+// 	}
+// 	if user.IDFrontImage != "" {
+// 		set["id_front_image"] = user.IDFrontImage
+// 	}
+// 	if user.IDBackImage != "" {
+// 		set["id_back_image"] = user.IDBackImage
+// 	}
+// 	if user.DLFrontImage != "" {
+// 		set["dl_front_image"] = user.DLFrontImage
+// 	}
+// 	if user.DLBackImage != "" {
+// 		set["dl_back_image"] = user.DLBackImage
+// 	}
+// 	if user.PlanActive != nil {
+// 		set["plan_active"] = user.PlanActive
+// 	}
+// 	if user.Access != nil {
+// 		set["access"] = user.Access
+// 	}
+// 	if user.DOB != "" {
+// 		set["dob"] = user.DOB
+// 	}
+// 	if user.IDVerified != nil {
+// 		set["id_verified"] = *user.IDVerified
+// 		if *user.IDVerified && userN.FirebaseToken != nil {
+// 			notify.NewService().SendNotification("ID Verified", "Your ID has been verified", userN.ID.Hex(), "idVerified", *userN.FirebaseToken)
+// 		}
+// 	}
+// 	if user.DLVerified != nil {
+// 		set["dl_verified"] = *user.DLVerified
+// 		if *user.DLVerified && userN.FirebaseToken != nil {
+// 			notify.NewService().SendNotification("DL Verified", "Your DL has been verified", userN.ID.Hex(), "idVerified", *userN.FirebaseToken)
+// 		}
+// 	}
+// 	if user.Gender != nil && *user.Gender != "" {
+// 		set["gender"] = *user.Gender
+// 	}
+// 	if user.UrlToProfileImage != nil && *user.UrlToProfileImage != "" {
+// 		set["url_to_profile_image"] = user.UrlToProfileImage
+// 	}
+// 	if user.Role != nil {
+// 		set["role"] = *user.Role
+// 	}
+// 	if user.StatusBool != nil {
+// 		set["status_bool"] = *user.StatusBool
+// 	}
+// 	if user.FirebaseToken != nil {
+// 		set["firebase_token"] = *user.FirebaseToken
+// 	}
+// 	if user.ServiceType != "" {
+// 		set["service_type"] = user.ServiceType
+// 	}
+// 	inc := bson.M{}
+// 	inc["green_points"] = user.GreenPoints
+// 	inc["carbon_saved"] = user.CarbonSaved
 
-	if user.PlanID != nil {
-		if *user.PlanID == "" {
-			set["plan_id"] = ""
-			set["plan"] = nil
-			set["plan_active"] = false
-			set["plan_start_time"] = 0
-			set["plan_end_time"] = 0
-		}
-		set["plan_id"] = *user.PlanID
-		plan, _ := pdb.NewService().GetPlan(*user.PlanID)
-		set["plan"] = plan
-		planValidity, _ := strconv.Atoi(plan.Validity)
-		planEnd := int64(planValidity)*24*60*60 + time.Now().Unix()
-		set["plan_active"] = true
-		set["plan_start_time"] = time.Now().Unix()
-		set["plan_end_time"] = planEnd
-		set["service_type"] = plan.Type
-	}
+// 	if user.PlanID != nil {
+// 		if *user.PlanID == "" {
+// 			set["plan_id"] = ""
+// 			set["plan"] = nil
+// 			set["plan_active"] = false
+// 			set["plan_start_time"] = 0
+// 			set["plan_end_time"] = 0
+// 		}
+// 		set["plan_id"] = *user.PlanID
+// 		plan, _ := pdb.NewService().GetPlan(*user.PlanID)
+// 		set["plan"] = plan
+// 		planValidity, _ := strconv.Atoi(plan.Validity)
+// 		planEnd := int64(planValidity)*24*60*60 + time.Now().Unix()
+// 		set["plan_active"] = true
+// 		set["plan_start_time"] = time.Now().Unix()
+// 		set["plan_end_time"] = planEnd
+// 		set["service_type"] = plan.Type
+// 	}
 
-	set["update_time"] = time.Now()
-	setS := bson.M{"$set": set}
-	setS["$inc"] = inc
+// 	set["update_time"] = time.Now()
+// 	setS := bson.M{"$set": set}
+// 	setS["$inc"] = inc
 
-	return repo.UpdateOne(filter, setS)
-}
+// 	return repo.UpdateOne(filter, setS)
+// }
