@@ -7,7 +7,6 @@ import (
 	"futureEVChronJobs/pkg/repo/profile"
 	"futureEVChronJobs/pkg/services/notifications/notify"
 	pdb "futureEVChronJobs/pkg/services/plan/pDB"
-	userattendance "futureEVChronJobs/pkg/services/userAttendance"
 	"strconv"
 	"time"
 
@@ -166,7 +165,23 @@ func createStaffPipeline(filter bson.M) bson.A {
 	return pipeline
 }
 
-// UpdateUser implements UserI.
+func RemovePlan(userId string) (string, error) {
+	idObject, _ := primitive.ObjectIDFromHex(userId)
+	filter := bson.M{"_id": idObject}
+
+	booking, err := booking.NewRepository("booking").FindOne(bson.M{"profile_id": userId, "status": "started"}, bson.M{})
+	if err == nil || booking.City != "" {
+		return "", errors.New("user has ongoing booking")
+	}
+	set := bson.M{}
+	set["plan_id"] = ""
+	set["plan"] = nil
+	set["plan_active"] = false
+	set["plan_start_time"] = 0
+	set["plan_end_time"] = 0
+	return repo.UpdateOne(filter, bson.M{"$set": set})
+}
+
 func (s *service) UpdateUser(id string, user entity.ProfileDB) (string, error) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
 	filter := bson.M{"_id": idObject}
@@ -261,72 +276,10 @@ func (s *service) UpdateUser(id string, user entity.ProfileDB) (string, error) {
 		set["plan_end_time"] = planEnd
 		set["service_type"] = plan.Type
 	}
-	if user.StaffStatus != "" {
-		set["staff_status"] = user.StaffStatus
-		attend := entity.UserAttendance{
-			ProfileID:   id,
-			Status:      user.StaffStatus,
-			UpdatedTime: time.Now(),
-		}
-		userattendance.AddUserAttendance(attend)
-	}
+
 	set["update_time"] = time.Now()
 	setS := bson.M{"$set": set}
 	setS["$inc"] = inc
 
 	return repo.UpdateOne(filter, setS)
-}
-
-func (s *service) DeleteUser(id string) (string, error) {
-	idObject, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.M{"_id": idObject}
-	return repo.UpdateOne(filter, bson.M{"$set": bson.M{"status": "deleted"}})
-}
-func (s *service) DeleteUserPermanently(id string) error {
-	idObject, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.M{"_id": idObject}
-	return repo.DeleteOne(filter)
-}
-func (s *service) RemovePlan(id, planID string) (string, error) {
-	idObject, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.M{"_id": idObject}
-	user, err := s.GetUserById(id)
-	if err != nil {
-		return "", err
-	}
-	if user.PlanID != nil && *user.PlanID != planID {
-		return "", errors.New("plan not found")
-	}
-	set := bson.M{}
-	set["plan_id"] = ""
-	set["plan"] = nil
-	set["service_type"] = ""
-	set["plan_active"] = false
-	set["plan_start_time"] = 0
-	set["plan_end_time"] = 0
-	return repo.UpdateOne(filter, bson.M{"$set": set})
-}
-func ChangeServiceType(id string, serviceType string) (string, error) {
-	idObject, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.M{"_id": idObject}
-	set := bson.M{}
-	set["service_type"] = serviceType
-	set["update_time"] = time.Now()
-	return repo.UpdateOne(filter, bson.M{"$set": set})
-}
-func RemovePlan(userId string) (string, error) {
-	idObject, _ := primitive.ObjectIDFromHex(userId)
-	filter := bson.M{"_id": idObject}
-
-	booking, err := booking.NewRepository("booking").FindOne(bson.M{"profile_id": userId, "status": "started"}, bson.M{})
-	if err == nil || booking.City != "" {
-		return "", errors.New("user has ongoing booking")
-	}
-	set := bson.M{}
-	set["plan_id"] = ""
-	set["plan"] = nil
-	set["plan_active"] = false
-	set["plan_start_time"] = 0
-	set["plan_end_time"] = 0
-	return repo.UpdateOne(filter, bson.M{"$set": set})
 }

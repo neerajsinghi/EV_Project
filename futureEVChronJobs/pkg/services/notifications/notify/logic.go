@@ -1,7 +1,6 @@
 package notify
 
 import (
-	"errors"
 	"futureEVChronJobs/pkg/entity"
 	notificationrepo "futureEVChronJobs/pkg/repo/notification"
 	utils "futureEVChronJobs/pkg/util"
@@ -26,28 +25,4 @@ func (s *str) SendNotification(title string, body string, userId string, ntype, 
 		Type:   ntype,
 	})
 	return err
-}
-func (s *str) SendMultipleNotifications(title, body, ntype string, userIds []string, tokens []string) error {
-	if len(userIds) != len(tokens) {
-		return errors.New("userIds and tokens must have the same length")
-	}
-	for i := range userIds {
-		utils.SendNotification(title, body, tokens[i])
-		_, err := repo.InsertOne(entity.Notification{
-			Title:  title,
-			Body:   body,
-			UserId: userIds[i],
-			Token:  tokens[i],
-			Type:   ntype,
-		})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// GetAllNotifications implements Notify.
-func (s *str) GetAllNotifications() ([]entity.Notification, error) {
-	return repo.Find(nil, nil)
 }

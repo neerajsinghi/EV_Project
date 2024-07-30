@@ -10,16 +10,6 @@ import (
 
 var repo = city.NewRepository("city")
 
-func AddCity(city entity.City) (string, error) {
-	city.ID = primitive.NewObjectID()
-	return repo.InsertOne(city)
-}
-
-func DeleteCity(id string) error {
-	idObject, _ := primitive.ObjectIDFromHex(id)
-	return repo.DeleteOne(bson.M{"_id": idObject})
-}
-
 func GetCity(id string) (*entity.City, error) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
 	filter := bson.M{"_id": idObject}
@@ -45,28 +35,4 @@ func InCity(lat, long float64) (*entity.City, error) {
 		return nil, err
 	}
 	return city, nil
-}
-
-func UpdateCity(id string, city entity.City) (string, error) {
-	set := bson.M{}
-	if city.Active != nil {
-		set["active"] = city.Active
-	}
-	if city.Name != "" {
-		set["name"] = city.Name
-	}
-	if city.NumberOfStations != nil {
-		set["numberOfStations"] = city.NumberOfStations
-	}
-	if city.NumberOfVehicles != nil {
-		set["numberOfVehicles"] = city.NumberOfVehicles
-	}
-	if city.LocationPolygon.Type != "" {
-		set["locationPolygon.type"] = city.LocationPolygon.Type
-	}
-	if len(city.LocationPolygon.Coordinates) != 0 {
-		set["locationPolygon.coordinates"] = city.LocationPolygon.Coordinates
-	}
-	idObject, _ := primitive.ObjectIDFromHex(id)
-	return repo.UpdateOne(bson.M{"_id": idObject}, bson.M{"$set": set})
 }
