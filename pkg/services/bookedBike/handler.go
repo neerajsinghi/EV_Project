@@ -7,7 +7,9 @@ import (
 )
 
 func GetBookedBike(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	userID := r.URL.Query().Get("userID")
 	bookingId := r.URL.Query().Get("bookingId")
 	data, err := bookedlogic.GetBookedBike(userID, bookingId)

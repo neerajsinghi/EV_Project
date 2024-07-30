@@ -17,7 +17,9 @@ var service = vdb.NewService()
 
 // AddVehicleType adds a new vehicle type
 func AddVehicleType(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	vehicleType, err := getVehicleType(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get vehicle type"))
@@ -31,7 +33,9 @@ func AddVehicleType(w http.ResponseWriter, r *http.Request) {
 
 // UpdateVehicleType updates a vehicle type
 func UpdateVehicleType(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	vehicleType, err := getVehicleType(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get vehicle type"))
@@ -46,14 +50,18 @@ func UpdateVehicleType(w http.ResponseWriter, r *http.Request) {
 
 // DeleteVehicleType deletes a vehicle type
 func DeleteVehicleType(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	id := mux.Vars(r)["id"]
 	err := service.DeleteVehicleType(id)
 	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteVehicleType")
 }
 
 func GetAllVehicleTypes(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	data, err := service.GetVehicleType()
 	utils.SendOutput(err, w, r, data, nil, "GetAllVehicleTypes")
 }

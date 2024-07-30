@@ -68,7 +68,9 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginUsingPassword(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 
 	user, err := GetCredentials(r)
 	if err != nil {
@@ -95,7 +97,9 @@ func LoginUsingPassword(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "token": token, "data": data})
 }
 func LoginUsingPhone(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 
 	user, err := GetCredentials(r)
 	if err != nil {
@@ -109,7 +113,9 @@ func LoginUsingPhone(w http.ResponseWriter, r *http.Request) {
 	utils.SendOutput(err, w, r, response, user, "LoginUsingPhone")
 }
 func ForgetPasswordOTPLink(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 
 	user, err := GetCredentials(r)
 	if err != nil {
@@ -123,7 +129,9 @@ func ForgetPasswordOTPLink(w http.ResponseWriter, r *http.Request) {
 	utils.SendOutput(err, w, r, data, nil, "ForgetPasswordOTPLink")
 }
 func VerifyAndUpdatePassword(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 
 	user, err := GetCredentials(r)
 	if err != nil {
@@ -137,7 +145,9 @@ func VerifyAndUpdatePassword(w http.ResponseWriter, r *http.Request) {
 	utils.SendOutput(err, w, r, data, nil, "VerifyAndUpdatePassword")
 }
 func VerifyOTPAndSendToken(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 
 	user, err := GetCredentials(r)
 	if err != nil {
@@ -174,7 +184,9 @@ func VerifyOTPAndSendToken(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data, "token": token})
 }
 func ChangePassword(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	tokenString := strings.Split(r.Header.Get("Authorization"), " ")
 	if len(tokenString) < 2 {
 		w.WriteHeader(http.StatusUnauthorized)

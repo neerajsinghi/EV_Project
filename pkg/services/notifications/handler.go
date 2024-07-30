@@ -15,7 +15,9 @@ var service = notify.NewService()
 
 // Notify defines the required methods for the notification service.
 func SendNotification(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 
 	notification, err := parseNotificationRequest(r)
 	if err != nil {
@@ -30,7 +32,9 @@ func SendNotification(w http.ResponseWriter, r *http.Request) {
 
 // GetAllNotifications returns all notifications.
 func GetAllNotifications(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 
 	notifications, err := service.GetAllNotifications()
 	utils.SendOutput(err, w, r, notifications, nil, "GetAllNotifications")
@@ -54,7 +58,9 @@ func parseMultiNotificationRequest(r *http.Request) (entity.NotificationMulti, e
 
 // SendMultipleNotifications sends notifications to multiple users.
 func SendMultipleNotifications(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 
 	notification, err := parseMultiNotificationRequest(r)
 	if err != nil {

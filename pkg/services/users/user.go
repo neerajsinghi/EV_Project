@@ -13,21 +13,27 @@ import (
 var service = udb.NewService()
 
 func GetUsers(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	userType := r.URL.Query().Get("type")
 	data, err := service.GetUsers(userType)
 	utils.SendOutput(err, w, r, data, nil, "GetUsers")
 }
 
 func GetUserById(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	id := mux.Vars(r)["id"]
 	data, err := service.GetUserById(id)
 	utils.SendOutput(err, w, r, data, nil, "GetUserById")
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	id := mux.Vars(r)["id"]
 	user, err := getUser(r)
 	shouldReturn := utils.CheckError(err, w)
@@ -49,21 +55,27 @@ func getUser(r *http.Request) (entity.ProfileDB, error) {
 }
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	id := mux.Vars(r)["id"]
 	_, err := service.DeleteUser(id)
 	utils.SendOutput(err, w, r, nil, nil, "DeleteUser")
 }
 
 func DeleteUserPermanently(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	id := mux.Vars(r)["id"]
 	err := service.DeleteUserPermanently(id)
 	utils.SendOutput(err, w, r, nil, nil, "DeleteUserPermanently")
 }
 
 func RemovePlan(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	id := mux.Vars(r)["id"]
 	planID := mux.Vars(r)["plan_id"]
 	data, err := service.RemovePlan(id, planID)

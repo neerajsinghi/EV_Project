@@ -14,7 +14,9 @@ var feed = feedback.New()
 
 // AddFeedback adds a feedback to the database
 func AddFeedback(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	feedback, err := parseFeed(r)
 	if err != nil {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
@@ -27,14 +29,18 @@ func AddFeedback(w http.ResponseWriter, r *http.Request) {
 
 // GetFeedbacks returns all feedbacks
 func GetFeedbacks(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	data, err := feed.GetFeedbacks()
 	utils.SendOutput(err, w, r, data, nil, "GetFeedbacks")
 }
 
 // DeleteFeedback deletes a feedback
 func DeleteFeedback(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	id := mux.Vars(r)["id"]
 	err := feed.DeleteFeedback(id)
 	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteFeedback")

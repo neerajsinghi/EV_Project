@@ -14,7 +14,9 @@ import (
 var service = faqdb.NewService()
 
 func AddFaq(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	faq, err := parseFaq(r)
 	if err != nil {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
@@ -29,7 +31,9 @@ func AddFaq(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateFaq(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	faq, err := parseFaq(r)
 	if err != nil {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
@@ -44,14 +48,18 @@ func UpdateFaq(w http.ResponseWriter, r *http.Request) {
 	utils.SendOutput(err, w, r, data, faq, "UpdateFaq")
 }
 func DeleteFaq(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	id := mux.Vars(r)["id"]
 	err := service.DeleteFaq(id)
 	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteFaq")
 }
 
 func GetAllFaq(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w,r)
+	if utils.SetOutput(w, r) {
+		return
+	}
 	data, err := service.GetAllFaq()
 	utils.SendOutput(err, w, r, data, nil, "GetAllFaq")
 }
