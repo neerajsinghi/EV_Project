@@ -17,7 +17,7 @@ var service = db.NewService()
 
 // AddBikeDevice adds a new bike
 func AddBikeDevice(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	bikeDevice, err := getBikeDevice(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get bike device"))
@@ -31,7 +31,7 @@ func AddBikeDevice(w http.ResponseWriter, r *http.Request) {
 
 // UpdateBikeDevice updates a bike
 func UpdateBikeDevice(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	bikeDevice, err := getBikeDevice(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get bike device"))
@@ -46,7 +46,7 @@ func UpdateBikeDevice(w http.ResponseWriter, r *http.Request) {
 
 // DeleteBikeDevice deletes a bike
 func DeleteBikeDevice(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	id := mux.Vars(r)["id"]
 	err := service.DeleteBikeDevice(id)
 	utils.SendOutput(err, w, r, "Deleted successfully", id, "DeleteBikeDevice")
@@ -54,19 +54,19 @@ func DeleteBikeDevice(w http.ResponseWriter, r *http.Request) {
 
 // FindAll returns all the bikes
 func GetAll(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	data, err := service.FindAll()
 	utils.SendOutput(err, w, r, data, nil, "GetAll")
 
 }
 func GetBikeDevicesByStation(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	stationID := mux.Vars(r)["stationID"]
 	data, err := service.FindBikeByStation(stationID)
 	utils.SendOutput(err, w, r, data, stationID, "GetBikeDevicesByStation")
 }
 func GetBikeDevicesByDeviceID(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	stationID := mux.Vars(r)["id"]
 	data, err := service.FindBikeByDeviceID(stationID)
 	utils.SendOutput(err, w, r, data, nil, "GetBikeDevicesByDeviceID")

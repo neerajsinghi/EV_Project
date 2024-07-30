@@ -17,7 +17,7 @@ import (
 var service = db.NewService()
 
 func Book(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	booking, err := getBooking(r)
 	if err != nil {
 		trestCommon.ECLog1(err)
@@ -37,7 +37,7 @@ func Book(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAllBookings(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	status := r.URL.Query().Get("status")
 	bType := r.URL.Query().Get("type")
 	vType := r.URL.Query().Get("vehicleType")
@@ -45,21 +45,21 @@ func GetAllBookings(w http.ResponseWriter, r *http.Request) {
 	utils.SendOutput(err, w, r, data, nil, "GetAllBookings")
 }
 func GetMyAllBooking(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	userID := mux.Vars(r)["id"]
 	bType := r.URL.Query().Get("status")
 	data, err := service.GetAllMyBooking(userID, bType)
 	utils.SendOutput(err, w, r, data, nil, "GetMyAllBooking")
 }
 func GetMyLatestBooking(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	userID := mux.Vars(r)["id"]
 
 	data, err := service.GetMyLatestBooking(userID)
 	utils.SendOutput(err, w, r, data, nil, "GetMyLatestBooking")
 }
 func UpdateBooking(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	id := mux.Vars(r)["id"]
 	booking, err := getBooking(r)
 	if err != nil {
@@ -82,7 +82,7 @@ func UpdateBooking(w http.ResponseWriter, r *http.Request) {
 	utils.SendOutput(err, w, r, dataBooking, booking, "UpdateBooking")
 }
 func ResumeStoppedBooking(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	id := mux.Vars(r)["id"]
 	data, err := service.UpdateBooking(id, entity.BookingDB{Status: "resumed"})
 	if err != nil {
@@ -94,7 +94,7 @@ func ResumeStoppedBooking(w http.ResponseWriter, r *http.Request) {
 	utils.SendOutput(err, w, r, dataBooking, "resuming", "ResumeStoppedBooking")
 }
 func GetBookingByID(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	id := mux.Vars(r)["id"]
 	data, err := db.GetBooking(id)
 	utils.SendOutput(err, w, r, data, nil, "GetBookingByID")

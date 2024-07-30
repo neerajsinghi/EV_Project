@@ -10,7 +10,7 @@ import (
 )
 
 func GetPredef(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	name := r.URL.Query().Get("name")
 	var data interface{}
 	var err error
@@ -22,7 +22,7 @@ func GetPredef(w http.ResponseWriter, r *http.Request) {
 	utils.SendOutput(err, w, r, data, nil, "GetPreddef")
 }
 func AddPredef(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	notification, err := parseNotification(r)
 	if err != nil {
 		utils.SendOutput(err, w, r, nil, notification, "AddPredef")
@@ -32,7 +32,7 @@ func AddPredef(w http.ResponseWriter, r *http.Request) {
 	utils.SendOutput(err, w, r, data, notification, "AddPredef")
 }
 func UpdatePredef(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	name := r.URL.Query().Get("name")
 	if name == "" {
 		utils.SendOutput(errors.New("name missing"), w, r, nil, nil, "UpdatePredef")
@@ -47,7 +47,7 @@ func UpdatePredef(w http.ResponseWriter, r *http.Request) {
 	utils.SendOutput(err, w, r, data, notification, "UpdatePredef")
 }
 func DeletePredef(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	name := r.URL.Query().Get("name")
 	if name == "" {
 		utils.SendOutput(errors.New("name missing"), w, r, nil, nil, "DeletePredef")

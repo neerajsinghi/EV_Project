@@ -11,7 +11,7 @@ import (
 
 // Logic is a function that returns the statistics of the users, stations and chargers.
 func Statistics(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	startDate := r.URL.Query().Get("startDate")
 	endDate := r.URL.Query().Get("endDate")
 	city := r.URL.Query().Get("city")
@@ -25,7 +25,7 @@ func Statistics(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetVehicleDataHand(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	id := mux.Vars(r)["id"]
 	idi, _ := strconv.Atoi(id)
 	data, err := GetVehicleData(idi)
@@ -33,7 +33,7 @@ func GetVehicleDataHand(w http.ResponseWriter, r *http.Request) {
 }
 
 func ImmobilizeDevHand(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	id := mux.Vars(r)["id"]
 	idi, _ := strconv.Atoi(id)
 	err := ImmobilizeDevice(idi)

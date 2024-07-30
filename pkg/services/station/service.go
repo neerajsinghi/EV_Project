@@ -18,7 +18,7 @@ var service = sdb.NewService()
 
 // AddStation adds a new station
 func AddStation(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	station, err := getStation(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get station"))
@@ -32,7 +32,7 @@ func AddStation(w http.ResponseWriter, r *http.Request) {
 
 // UpdateStation updates a station
 func UpdateStation(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	station, err := getStation(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get station"))
@@ -47,7 +47,7 @@ func UpdateStation(w http.ResponseWriter, r *http.Request) {
 
 // DeleteStation deletes a station
 func DeleteStation(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	id := mux.Vars(r)["id"]
 	err := service.DeleteStation(id)
 	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteStation")
@@ -55,14 +55,14 @@ func DeleteStation(w http.ResponseWriter, r *http.Request) {
 
 // GetAllStations gets all stations
 func GetAllStations(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	data, err := service.GetStation()
 	utils.SendOutput(err, w, r, data, nil, "GetAllStations")
 }
 
 // GetNearByStations gets all stations near by
 func GetNearByStations(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	lat := r.URL.Query().Get("lat")
 	lon := r.URL.Query().Get("long")
 	distance := r.URL.Query().Get("distance")
@@ -73,7 +73,7 @@ func GetNearByStations(w http.ResponseWriter, r *http.Request) {
 	utils.SendOutput(err, w, r, data, nil, "GetNearByStations")
 }
 func GetStationsByID(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	id := mux.Vars(r)["id"]
 	data, err := service.GetStationByID(id)
 	utils.SendOutput(err, w, r, data, nil, "GetStationsByID")

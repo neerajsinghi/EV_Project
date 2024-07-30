@@ -16,7 +16,7 @@ import (
 var service = db.NewService()
 
 func AddWallet(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	wallet, err := getWallet(r)
 	if err != nil {
 		trestCommon.ECLog1(err)
@@ -28,12 +28,12 @@ func AddWallet(w http.ResponseWriter, r *http.Request) {
 	utils.SendOutput(err, w, r, data, wallet, "AddWallet")
 }
 func GetAllWallets(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	data, err := service.Find()
 	utils.SendOutput(err, w, r, data, nil, "GetAllWallets")
 }
 func GetMyWallet(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	id := mux.Vars(r)["id"]
 	data, err := service.FindMy(id)
 	utils.SendOutput(err, w, r, data, nil, "GetMyWallet")

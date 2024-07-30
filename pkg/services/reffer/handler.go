@@ -11,7 +11,7 @@ type Referral struct {
 }
 
 func GetReferralsHandler(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	data, err := GetReffer()
 	utils.SendOutput(err, w, r, data, nil, "GetReferrals")
 }

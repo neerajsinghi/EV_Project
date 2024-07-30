@@ -18,7 +18,7 @@ var service = chargeDB.NewService()
 
 // AddCharger adds a new station
 func AddCharger(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	station, err := getCharger(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get station"))
@@ -32,7 +32,7 @@ func AddCharger(w http.ResponseWriter, r *http.Request) {
 
 // UpdateCharger updates a station
 func UpdateCharger(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	station, err := getCharger(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get station"))
@@ -47,7 +47,7 @@ func UpdateCharger(w http.ResponseWriter, r *http.Request) {
 
 // DeleteCharger deletes a station
 func DeleteCharger(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	id := mux.Vars(r)["id"]
 	err := service.DeleteCharger(id)
 	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteCharger")
@@ -55,14 +55,14 @@ func DeleteCharger(w http.ResponseWriter, r *http.Request) {
 
 // GetAllChargers gets all stations
 func GetAllChargers(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	data, err := service.GetCharger()
 	utils.SendOutput(err, w, r, data, nil, "GetAllChargers")
 }
 
 // GetNearByChargers gets all stations near by
 func GetNearByChargers(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	lat := r.URL.Query().Get("lat")
 	lon := r.URL.Query().Get("long")
 	distance := r.URL.Query().Get("distance")

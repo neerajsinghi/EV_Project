@@ -339,10 +339,19 @@ func SendOutput(err error, w http.ResponseWriter, r *http.Request, data, body in
 	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": data})
 }
 
-func SetOutput(w http.ResponseWriter) {
+func SetOutput(w http.ResponseWriter, r *http.Request) bool {
 	startTime := time.Now()
-	commonGo.DLogMap("setting brand", logrus.Fields{
-		"start_time": startTime})
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	token := r.Header.Get("Authorization")
+	if token != "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Authorisation error"})
+		
+		return false
+	}else{
+		commonGo.DLogMap("setting brand", logrus.Fields{
+			"start_time": startTime})
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		return true
+	}	
 }

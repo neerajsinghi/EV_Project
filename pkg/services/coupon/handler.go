@@ -17,7 +17,7 @@ var coupon = cdb.NewCoupon()
 
 // AddCoupon adds a new coupon
 func AddCoupon(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	couponD, err := getCoupon(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get coupon"))
@@ -31,7 +31,7 @@ func AddCoupon(w http.ResponseWriter, r *http.Request) {
 
 // UpdateCoupon updates a coupon
 func UpdateCoupon(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	couponD, err := getCoupon(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get coupon"))
@@ -46,7 +46,7 @@ func UpdateCoupon(w http.ResponseWriter, r *http.Request) {
 
 // DeleteCoupon deletes a coupon
 func DeleteCoupon(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	id := mux.Vars(r)["id"]
 	err := coupon.DeleteCoupon(id)
 	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteCoupon")
@@ -54,7 +54,7 @@ func DeleteCoupon(w http.ResponseWriter, r *http.Request) {
 
 // GetCoupon gets a coupon
 func GetCoupons(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	data, err := coupon.GetCoupon()
 	utils.SendOutput(err, w, r, data, nil, "GetCoupon")
 }

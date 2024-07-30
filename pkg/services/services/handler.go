@@ -17,7 +17,7 @@ var serviceDB = servdb.NewService()
 
 // AddService adds a new service
 func AddService(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	service, err := getService(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get service"))
@@ -31,7 +31,7 @@ func AddService(w http.ResponseWriter, r *http.Request) {
 
 // UpdateService updates a service
 func UpdateService(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	service, err := getService(r)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to get service"))
@@ -46,14 +46,14 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 
 // DeleteService deletes a service
 func DeleteService(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	id := mux.Vars(r)["id"]
 	err := serviceDB.DeleteService(id)
 	utils.SendOutput(err, w, r, "Deleted successfully", nil, "DeleteService")
 }
 
 func GetService(w http.ResponseWriter, r *http.Request) {
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	data, err := serviceDB.GetAllServices()
 	utils.SendOutput(err, w, r, data, nil, "GetAllServices")
 }

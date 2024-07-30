@@ -15,7 +15,7 @@ var service = db.NewService()
 // FindAll returns all the bikes
 func GetAll(w http.ResponseWriter, r *http.Request) {
 
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	data, err := service.FindAll()
 	utils.SendOutput(err, w, r, data, nil, "GetAll")
 
@@ -24,7 +24,7 @@ func GetAll(w http.ResponseWriter, r *http.Request) {
 // get nearest based on lat and long
 func GetNearest(w http.ResponseWriter, r *http.Request) {
 
-	utils.SetOutput(w)
+	utils.SetOutput(w,r)
 	lat := r.URL.Query().Get("lat")
 	long := r.URL.Query().Get("long")
 	distance := r.URL.Query().Get("distance")
