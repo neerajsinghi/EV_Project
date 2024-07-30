@@ -4,6 +4,7 @@ import (
 	"futureEVChronJobs/pkg/services/chronjobs"
 	"futureEVChronJobs/pkg/services/motog"
 	utils "futureEVChronJobs/pkg/util"
+	"log"
 	"time"
 
 	commonGo "github.com/Trestx-technology/trestx-common-go-lib"
@@ -36,4 +37,8 @@ func main() {
 			time.Sleep(time.Minute)
 		}
 	}()
+	for {
+		log.Println("Running")
+		time.Sleep(time.Minute * 500)
+	}
 }
