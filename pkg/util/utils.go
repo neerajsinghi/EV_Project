@@ -343,15 +343,25 @@ func SetOutput(w http.ResponseWriter, r *http.Request) bool {
 	startTime := time.Now()
 	token := r.Header.Get("Authorization")
 	if token != "" {
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Authorisation error"})
-		
+			tokens := strings.Split(token, " ")
+		if len(tokens) > 1 {
+			token = tokens[1]
+		}else{
+			w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Authorisation error"})	
 		return false
-	}else{
+		}
+		da, lErr := commonGo.DecodeToken(token)
+		if lErr != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Authorisation error"})	
+		return false
+}
+	}
 		commonGo.DLogMap("setting brand", logrus.Fields{
 			"start_time": startTime})
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		return true
-	}	
+		
 }
