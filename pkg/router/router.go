@@ -31,6 +31,7 @@ func NewRouter() *mux.Router {
 	addRoutes(sub, usersRoutes)
 	addRoutes(sub, vehicleTypeRoutes)
 	addRoutes(sub, walletRoutes)
+	addRoutes(sub, selectedColRoutes)
 	return router
 }
 

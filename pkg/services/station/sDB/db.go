@@ -2,8 +2,10 @@ package sdb
 
 import (
 	"bikeRental/pkg/entity"
+	"bikeRental/pkg/repo/generic"
 	"bikeRental/pkg/repo/station"
 	"bikeRental/pkg/services/bikeDevice/db"
+	"context"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,6 +13,7 @@ import (
 )
 
 var repo = station.NewRepository("station")
+var repoGeneric = generic.NewRepository("station")
 
 type service struct{}
 
@@ -59,24 +62,76 @@ func (s *service) DeleteStation(id string) error {
 	return repo.DeleteOne(bson.M{"_id": idObject})
 }
 
-func (s *service) GetStation() ([]entity.StationDB, error) {
-	resp, err := repo.Find(bson.M{}, bson.M{})
+func (s *service) GetStation(userId, stationId string) ([]entity.StationDB, error) {
+	pipeline := bson.A{}
+
+	filter := bson.M{}
+	if userId != "" {
+		filter = bson.M{"supervisor_id": userId}
+		pipeline = bson.A{
+			bson.D{
+				{Key: "$match", Value: filter},
+			},
+		}
+	}
+	if stationId != "" {
+		idObject, _ := primitive.ObjectIDFromHex(stationId)
+		filter["_id"] = idObject
+		pipeline = bson.A{
+			bson.D{
+				{Key: "$match", Value: filter},
+			},
+		}
+	}
+	pipeline = append(pipeline, bson.A{
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "iotBile"},
+					{Key: "localField", Value: "device_id"},
+					{Key: "foreignField", Value: "deviceId"},
+					{Key: "as", Value: "bikes"},
+				},
+			},
+		},
+		bson.D{{Key: "$addFields", Value: bson.D{{Key: "uID", Value: bson.D{{Key: "$toObjectId", Value: "$supervisor_id"}}}}}},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "users"},
+					{Key: "localField", Value: "uID"},
+					{Key: "foreignField", Value: "_id"},
+					{Key: "as", Value: "supervisor"},
+				},
+			},
+		},
+		bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$supervisor"}}}},
+	}...)
+
+	cursor, err := repoGeneric.Aggregate(pipeline)
 	if err != nil {
 		return nil, err
 	}
-	for i := 0; i < len(resp); i++ {
-		bikes, err := db.NewService().FindBikeByStation(resp[i].ID.Hex())
-		if err == nil {
-			resp[i].Stock = new(int)
-			*resp[i].Stock = 0
-			for j := 0; j < len(bikes); j++ {
-				if bikes[j].DeviceData != nil && bikes[j].DeviceData.Status == "online" && bikes[j].DeviceData.BatteryLevel > 20 {
-					*resp[i].Stock += 1
-				}
+	defer cursor.Close(context.Background())
+	var stations []entity.StationDB
+	for cursor.Next(context.Background()) {
+		var station entity.StationDB
+		if err = cursor.Decode(&station); err != nil {
+			return nil, err
+		}
+		if station.Stock == nil {
+			station.Stock = new(int)
+			*station.Stock = 0
+		}
+		for _, dev := range station.Bikes {
+			if dev.Status == "online" && dev.BatteryLevel > 20 {
+				*station.Stock += 1
 			}
 		}
+
+		stations = append(stations, station)
 	}
-	return resp, err
+	return stations, err
 }
 func (s *service) GetStationByID(id string) (entity.StationDB, error) {
 	idObject, _ := primitive.ObjectIDFromHex(id)

@@ -164,6 +164,8 @@ func (w *service) CheckMyBooking(userId string) {
 		}
 		if booking.BikeWithDevice.Type == "moto" {
 			motog.ImmoblizeDevice(1, booking.BikeWithDevice.Name)
+		} else {
+			motog.ImmoblizeDeviceRoadcast(booking.DeviceID, "engineStop")
 		}
 	}
 	sort.Slice(planList, func(i, j int) bool {

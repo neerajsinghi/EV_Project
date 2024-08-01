@@ -51,6 +51,8 @@ func CheckBooking() {
 			}
 			if booking.BikeWithDevice.Type == "moto" {
 				motog.ImmoblizeDevice(1, booking.BikeWithDevice.Name)
+			} else {
+				motog.ImmoblizeDeviceRoadcast(booking.DeviceID, "engineStop")
 			}
 		}
 		sort.Slice(planList, func(i, j int) bool {
@@ -117,6 +119,8 @@ func CheckBooking() {
 			wdb.NewService().InsertOne(*walletN)
 			if booking.BikeWithDevice.Type == "moto" {
 				motog.ImmoblizeDevice(1, booking.BikeWithDevice.Name)
+			} else {
+				motog.ImmoblizeDeviceRoadcast(booking.DeviceID, "engineStop")
 			}
 			//stop booking
 			totalDistance := booking.BikeWithDevice.TotalDistanceFloat

@@ -56,7 +56,9 @@ func DeleteStation(w http.ResponseWriter, r *http.Request) {
 // GetAllStations gets all stations
 func GetAllStations(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
-	data, err := service.GetStation()
+	supervisorID := r.URL.Query().Get("userId")
+	stationId := r.URL.Query().Get("stationId")
+	data, err := service.GetStation(supervisorID, stationId)
 	utils.SendOutput(err, w, r, data, nil, "GetAllStations")
 }
 

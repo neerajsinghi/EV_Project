@@ -3,7 +3,6 @@ package main
 import (
 	"futureEVChronJobs/pkg/services/chronjobs"
 	"futureEVChronJobs/pkg/services/motog"
-	utils "futureEVChronJobs/pkg/util"
 	"log"
 	"time"
 
@@ -15,7 +14,7 @@ func main() {
 	commonGo.LoadConfig()
 	go func() {
 		for {
-			utils.GetDataFromPullAPI()
+			motog.GetDataFromPullAPI()
 			time.Sleep(time.Minute)
 		}
 	}()

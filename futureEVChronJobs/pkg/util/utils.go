@@ -5,15 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"futureEVChronJobs/pkg/entity"
 	"futureEVChronJobs/pkg/repo/generic"
-	iotbike "futureEVChronJobs/pkg/repo/iot_bike"
-	"futureEVChronJobs/pkg/services/motog"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -202,74 +197,6 @@ func CreatePreSignedDownloadUrl(url string) string {
 		}
 	}
 	return ""
-}
-
-func GetDataFromPullAPI() {
-	username := viper.GetString("pullapi.username")
-	password := viper.GetString("pullapi.password")
-	url := fmt.Sprintf("https://pullapi-s1.track360.co.in/api/v1/auth/pull_api?username=%s&password=%s", username, password)
-	method := "GET"
-
-	client := &http.Client{}
-	req, err := http.NewRequest(method, url, nil)
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer res.Body.Close()
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	log.Println(string(body))
-	var data response
-	err = json.Unmarshal(body, &data)
-
-	if err != nil {
-		fmt.Println(err)
-
-	}
-	var long, lat float64
-	repo := iotbike.NewProfileRepository("iotBike")
-	for i, d := range data.Data {
-		if data.Data[i].TotalDistance == "" && data.Data[i].TotalDistanceFloat == 0 {
-			continue
-		} else if data.Data[i].TotalDistanceFloat != 0 {
-			data.Data[i].TotalDistance = strconv.FormatFloat(data.Data[i].TotalDistanceFloat, 'f', -1, 64)
-		}
-		data.Data[i].Location.Type = "Point"
-		long, _ = strconv.ParseFloat(d.Longitude, 64)
-		lat, _ = strconv.ParseFloat(d.Latitude, 64)
-		data.Data[i].Location.Coordinates = []float64{long, lat}
-		var updateFields bson.M
-		conv, _ := bson.Marshal(data.Data[i])
-		bson.Unmarshal(conv, &updateFields)
-		filter := bson.M{"deviceId": d.DeviceId}
-		repo.UpdateOne(filter, bson.M{"$set": updateFields})
-		bikeLog := motog.BikeLog{
-			DeviceID:            data.Data[i].DeviceId,
-			DeviceName:          data.Data[i].Name,
-			Location:            data.Data[i].Location,
-			DeviceTotalDistance: data.Data[i].TotalDistanceFloat,
-			DeviceTime:          data.Data[i].LastUpdate,
-			Type:                data.Data[i].Type,
-		}
-		repoDev := generic.NewRepository("bikeLog")
-		repoDev.InsertOne(bikeLog)
-
-	}
-}
-
-type response struct {
-	Data []entity.IotBikeDB `json:"data"`
 }
 
 func CheckError(err error, w http.ResponseWriter) bool {

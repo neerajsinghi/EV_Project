@@ -10,7 +10,10 @@ require (
 	github.com/twilio/twilio-go v1.22.2
 )
 
-require github.com/golang/mock v1.6.0 // indirect
+require (
+	github.com/golang/mock v1.6.0 // indirect
+	github.com/razorpay/razorpay-go v1.3.2 // indirect
+)
 
 require (
 	cloud.google.com/go v0.115.0 // indirect

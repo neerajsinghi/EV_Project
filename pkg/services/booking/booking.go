@@ -99,6 +99,13 @@ func GetBookingByID(w http.ResponseWriter, r *http.Request) {
 	data, err := db.GetBooking(id)
 	utils.SendOutput(err, w, r, data, nil, "GetBookingByID")
 }
+func GetWithPlanAndUserID(w http.ResponseWriter, r *http.Request) {
+	utils.SetOutput(w)
+	planID := mux.Vars(r)["planID"]
+	userID := mux.Vars(r)["userID"]
+	data, err := service.GetBookingByPlanAndID(planID, userID)
+	utils.SendOutput(err, w, r, data, nil, "GetWithPlanAndUserID")
+}
 func getBooking(r *http.Request) (entity.BookingDB, error) {
 	var user entity.BookingDB
 

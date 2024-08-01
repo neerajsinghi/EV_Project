@@ -21,4 +21,10 @@ var walletRoutes = Routes{
 		"/wallet",
 		wallet.GetAllWallets,
 	},
+	Route{
+		"Get Wallet By Plan",
+		"GET",
+		"/wallet/plan/{id}",
+		wallet.GetWalletByPlanID,
+	},
 }

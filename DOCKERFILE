@@ -19,5 +19,11 @@ COPY --from=builder /app/conf/referencetest.yml conf/reference.yml
 RUN adduser -D -g '' appuser
 USER appuser
 
+# Expose the port your application listens on (if applicable)
+EXPOSE 1995
+
+# Define the health check command for the ECS task
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:1995/api/v1 || exit 1
+
 # Run the Application
 CMD ["./futureEV"]

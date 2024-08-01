@@ -2,6 +2,7 @@ package db
 
 import (
 	"bikeRental/pkg/entity"
+	"bikeRental/pkg/repo/generic"
 	"bikeRental/pkg/repo/wallet"
 	bookingDB "bikeRental/pkg/services/booking/db"
 	"bikeRental/pkg/services/city"
@@ -10,6 +11,8 @@ import (
 	pdb "bikeRental/pkg/services/plan/pDB"
 	predefnotification "bikeRental/pkg/services/predefNotification"
 	"bikeRental/pkg/services/users/udb"
+	utils "bikeRental/pkg/util"
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -38,6 +41,10 @@ func (s *service) DeleteOne(filter primitive.M) error {
 // Find implements Wallet.
 func (s *service) Find() ([]WalletTotal, error) {
 	return getWalletTotalAll()
+}
+
+func (s *service) FindForPlan(plan string) ([]entity.WalletS, error) {
+	return getWalletTotalForPlan(plan)
 }
 
 // FindMy implements Wallet.
@@ -71,7 +78,27 @@ func (s *service) InsertOne(document entity.WalletS) (WalletTotal, error) {
 		udb.NewService().UpdateUser(document.UserID, profile)
 	}
 	document.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
-
+	if document.PaymentID != "" && document.DepositedMoney > 0 {
+		capture, err := utils.Capture(document.PaymentID, int(document.DepositedMoney))
+		if err != nil {
+			return WalletTotal{}, err
+		}
+		document.CaptureData = capture
+	}
+	if document.PaymentID != "" && document.RefundableMoney > 0 {
+		capture, err := utils.Capture(document.PaymentID, int(document.DepositedMoney))
+		if err != nil {
+			return WalletTotal{}, err
+		}
+		document.CaptureData = capture
+	}
+	if document.RefundedMoney > 0 && document.PaymentID != "" {
+		refund, err := utils.Refund(document.PaymentID, int(document.RefundedMoney))
+		if err != nil {
+			return WalletTotal{}, err
+		}
+		document.CaptureData = refund
+	}
 	_, err = repo.InsertOne(document)
 
 	if err != nil {
@@ -140,6 +167,56 @@ func getWalletTotalAll() ([]WalletTotal, error) {
 	}
 	return walletList, nil
 }
+func getWalletTotalForPlan(plan string) ([]entity.WalletS, error) {
+	pipelineL := bson.A{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "plan_id", Value: bson.D{{Key: "$ne", Value: ""}}}}}},
+		bson.D{{Key: "$addFields", Value: bson.D{{Key: "userId", Value: bson.D{{Key: "$toObjectId", Value: "$user_id"}}}}}},
+		bson.D{{Key: "$lookup", Value: bson.D{{Key: "from", Value: "users"}, {Key: "localField", Value: "userId"}, {Key: "foreignField", Value: "_id"}, {Key: "as", Value: "userData"}}}},
+		bson.D{{Key: "$unwind", Value: bson.D{{Key: "path", Value: "$userData"}}}},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "booking"},
+					{Key: "localField", Value: "plan._id"},
+					{Key: "foreignField", Value: "plan._id"},
+					{Key: "as", Value: "bookings"},
+				},
+			},
+		},
+	}
+	if plan != "" {
+		pipeline := bson.A{bson.D{{Key: "$match", Value: bson.D{{Key: "plan_id", Value: plan}}}}}
+		pipeline = append(pipeline, pipelineL...)
+		pipelineL = pipeline
+	}
+	var repoG = generic.NewRepository("wallet")
+	cursor, err := repoG.Aggregate(pipelineL)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+	var wallets []entity.WalletS
+	for cursor.Next(context.Background()) {
+		var wallet entity.WalletS
+		if err = cursor.Decode(&wallet); err != nil {
+			return nil, err
+		}
+		wallet.EndTime = new(primitive.DateTime)
+		//use plan validity for end time
+		validity, _ := strconv.Atoi(wallet.Plan.Validity)
+		*wallet.EndTime = primitive.NewDateTimeFromTime(wallet.CreatedTime.Time().Add(time.Hour * time.Duration(validity*24)))
+		wallet.BookingCount = new(int)
+		*wallet.BookingCount = 0
+		for _, booking := range wallet.Bookings {
+			if booking.Plan.ID.Hex() == wallet.PlanID && booking.ProfileID == wallet.UserID && booking.CreatedTime.Time().Unix() >= wallet.CreatedTime.Time().Unix() && booking.CreatedTime.Time().Unix() <= wallet.EndTime.Time().Unix() {
+				*wallet.BookingCount += 1
+			}
+		}
+		wallet.Bookings = nil
+		wallets = append(wallets, wallet)
+	}
+	return wallets, nil
+}
 
 func (w *service) CheckMyBooking(userId string) {
 	booking, err := bookingDB.NewService().GetMyLatestBooking(userId)
@@ -174,6 +251,8 @@ func (w *service) CheckMyBooking(userId string) {
 		}
 		if booking.BikeWithDevice.Type == "moto" {
 			motog.ImmoblizeDevice(1, booking.BikeWithDevice.Name)
+		} else {
+			motog.ImmoblizeDeviceRoadcast(booking.DeviceID, "engineStop")
 		}
 	}
 	sort.Slice(planList, func(i, j int) bool {

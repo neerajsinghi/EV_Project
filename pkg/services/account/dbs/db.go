@@ -4,7 +4,6 @@ import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/repo/profile"
 	"bikeRental/pkg/repo/reffer"
-	"bikeRental/pkg/repo/wallet"
 	userattendance "bikeRental/pkg/services/userAttendance"
 	utils "bikeRental/pkg/util"
 	"math/rand"
@@ -311,19 +310,14 @@ func (*accountService) hashAndInsertData(cred Credentials) (string, error) {
 	if cred.ReferralCodeUsed != nil && *cred.ReferralCodeUsed != "" {
 		user, err := repo.FindOne(bson.M{"referral_code": *cred.ReferralCodeUsed}, bson.M{})
 		if err == nil {
-			walletS := entity.WalletS{
-				ID:             primitive.NewObjectID(),
-				UserID:         user.ID.Hex(),
-				DepositedMoney: 40,
-				Description:    "Referral Bonus",
-			}
-			wallet.NewRepository("wallet").InsertOne(walletS)
 			refUser, _ := repo.FindOne(bson.M{"_id": cred.ID}, bson.M{})
 			refer := entity.ReferralDB{
 				ReferralCode:      *cred.ReferralCodeUsed,
 				ReferrerBy:        user.ID.Hex(),
 				ReferredByProfile: user,
 				ReferralOf:        refUser,
+				ReferralStatus:    "pending",
+				ReferralOfId:      refUser.ID.Hex(),
 			}
 			repoRef := reffer.NewRepository("referral")
 			repoRef.InsertOne(refer)

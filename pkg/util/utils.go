@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
+	razorpay "github.com/razorpay/razorpay-go"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/twilio/twilio-go"
@@ -345,4 +346,24 @@ func SetOutput(w http.ResponseWriter) {
 		"start_time": startTime})
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+}
+
+func Capture(paymentID string, payment int) (interface{}, error) {
+	client := razorpay.NewClient(viper.GetString("razorpay.key"), viper.GetString("razorpay.secret"))
+	data := map[string]interface{}{
+		"currency": "INR",
+	}
+
+	return client.Payment.Capture(paymentID, payment*100, data, nil)
+}
+
+func Refund(paymentID string, payment int) (interface{}, error) {
+	client := razorpay.NewClient(viper.GetString("razorpay.key"), viper.GetString("razorpay.secret"))
+	data := map[string]interface{}{
+		"speed": "normal",
+		"notes": map[string]interface{}{
+			"key_1": "value1",
+		},
+	}
+	return client.Payment.Refund(paymentID, payment*100, data, nil)
 }

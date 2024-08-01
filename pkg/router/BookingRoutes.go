@@ -45,4 +45,10 @@ var bookingRoutes = Routes{
 		"/resume/booking/{id}",
 		booking.ResumeStoppedBooking,
 	},
+	Route{
+		"Get Booking By plan ID and User ID",
+		"GET",
+		"/booking/plan/{planID}/user/{userID}",
+		booking.GetWithPlanAndUserID,
+	},
 }

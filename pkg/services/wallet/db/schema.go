@@ -10,6 +10,7 @@ type Wallet interface {
 	InsertOne(document entity.WalletS) (WalletTotal, error)
 	FindMy(userId string) (WalletTotal, error)
 	Find() ([]WalletTotal, error)
+	FindForPlan(plan string) ([]entity.WalletS, error)
 	DeleteOne(filter bson.M) error
 }
 

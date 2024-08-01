@@ -811,6 +811,12 @@ func ImmobilizeDevice(deviceId int) error {
 			motog.ImmoblizeDevice(1, iotDev[0].Name)
 
 		}
+	} else if len(iotDev) == 1 && iotDev[0].DeviceId != 0 && iotDev[0].Type != "moto" {
+		if device.Immobilized {
+			motog.ImmoblizeDeviceRoadcast(iotDev[0].DeviceId, "engineResume")
+		} else {
+			motog.ImmoblizeDeviceRoadcast(iotDev[0].DeviceId, "engineStop")
+		}
 	}
 	_, err = repo.UpdateOne(filter, bson.M{"$set": set})
 	return err

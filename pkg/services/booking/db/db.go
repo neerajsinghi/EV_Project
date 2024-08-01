@@ -3,6 +3,7 @@ package db
 import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/repo/booking"
+	"bikeRental/pkg/repo/generic"
 	"bikeRental/pkg/repo/wallet"
 	db "bikeRental/pkg/services/account/dbs"
 	bookedlogic "bikeRental/pkg/services/bookedBike/logic"
@@ -12,6 +13,7 @@ import (
 	predefnotification "bikeRental/pkg/services/predefNotification"
 	"bikeRental/pkg/services/users/udb"
 	wdb "bikeRental/pkg/services/walletInt/db"
+	"context"
 	"fmt"
 	"log"
 	"sort"
@@ -155,25 +157,29 @@ func (s *service) DeleteBooking(id string) error {
 
 // GetAllBookings implements Booking.
 func (s *service) GetAllBookings(status, bType, vType string) ([]entity.BookingOut, error) {
-	filter := bson.M{}
+	filter := bson.D{}
 	if status != "" && status != "all" {
-		filter["status"] = status
+		filter = append(filter, bson.E{Key: "status", Value: status})
+
 	}
 	if bType != "" && bType != "all" {
-		filter["booking_type"] = bType
+		filter = append(filter, bson.E{Key: "booking_type", Value: bType})
 	}
 	if vType != "" && vType != "all" {
-		filter["vehicle_type"] = vType
+		filter = append(filter, bson.E{Key: "vehicle_type", Value: vType})
 	}
+
 	pipeline := createPipeline(filter)
 
 	return repo.Aggregate(pipeline)
 }
 
-func createPipeline(filter primitive.M) primitive.A {
-	pipeline := bson.A{
-
-		bson.D{{Key: "$match", Value: filter}},
+func createPipeline(filter bson.D) primitive.A {
+	pipeline := bson.A{}
+	if len(filter) > 0 {
+		pipeline = append(pipeline, bson.D{{Key: "$match", Value: filter}})
+	}
+	pipeline = append(pipeline, bson.A{
 		bson.D{{Key: "$addFields", Value: bson.D{
 			{Key: "userObjectId", Value: bson.D{{Key: "$toObjectId", Value: "$profile_id"}}},
 		}}},
@@ -207,20 +213,22 @@ func createPipeline(filter primitive.M) primitive.A {
 			{Key: "bikeWithDevice", Value: "$bikeWithDevice"},
 			{Key: "profile", Value: "$profile"},
 		}}}}},
-	}
+	}...)
 	return pipeline
 }
 func GetAllHourlyBookings() ([]entity.BookingOut, error) {
-	filter := bson.M{}
-	filter["status"] = "started"
-	filter["booking_type"] = "hourly"
+	filter := bson.D{
+		{Key: "status", Value: "started"},
+		{Key: "booking_type", Value: "hourly"},
+	}
 	pipeline := createPipeline(filter)
 
 	return repo.Aggregate(pipeline)
 }
 func GetAllStartedBookings() ([]entity.BookingOut, error) {
-	filter := bson.M{}
-	filter["status"] = "started"
+	filter := bson.D{
+		{Key: "status", Value: "started"},
+	}
 	pipeline := createPipeline(filter)
 
 	return repo.Aggregate(pipeline)
@@ -232,9 +240,9 @@ func GetMyBookingCount(userID string) (int64, error) {
 
 // GetAllMyBooking implements Booking.
 func (s *service) GetAllMyBooking(userID, bType string) ([]entity.BookingOut, error) {
-	filter := bson.M{"profile_id": userID}
+	filter := bson.D{{Key: "profile_id", Value: userID}}
 	if bType != "" && bType != "all" {
-		filter["status"] = bType
+		filter = append(filter, bson.E{Key: "booking_type", Value: bType})
 	}
 	pipeline := createPipeline(filter)
 
@@ -244,7 +252,7 @@ func (s *service) GetAllMyBooking(userID, bType string) ([]entity.BookingOut, er
 
 // GetMyBooking implements Booking.
 func (s *service) GetMyLatestBooking(userID string) (*entity.BookingOut, error) {
-	filter := bson.M{"profile_id": userID, "status": bson.M{"$ne": "completed"}}
+	filter := bson.D{{Key: "profile_id", Value: userID}, {Key: "status", Value: bson.D{{Key: "$ne", Value: "completed"}}}}
 	pipeline := createPipeline(filter)
 
 	booking, err := repo.Aggregate(pipeline)
@@ -357,8 +365,10 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 							timeBooked -= extendedTime
 						}
 					}
+
 					if booking.CouponCode != "" {
 						coupon, err := cdb.GetCouponByCode(booking.CouponCode)
+
 						if err == nil {
 
 							if coupon.CouponType == "discount" {
@@ -388,6 +398,8 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 						Description: "Booking",
 					}
 					wallet.NewRepository("wallet").InsertOne(wall)
+					referralPath(booking)
+
 				}
 				udb.ChangeServiceType(document.ProfileID, "")
 				userData, err := db.GetUser([]string{booking.ProfileID})
@@ -428,6 +440,8 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 		}
 		if booking.BikeWithDevice.Type == "moto" {
 			motog.ImmoblizeDevice(0, booking.BikeWithDevice.Name)
+		} else {
+			motog.ImmoblizeDeviceRoadcast(booking.DeviceID, "engineResume")
 		}
 		return data, nil
 
@@ -435,9 +449,42 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 	return "", errors.New("status not completed")
 }
 
+func referralPath(booking *entity.BookingOut) {
+	repoG := generic.NewRepository("referral")
+	referral, err := repoG.FindOne(bson.M{"referral_of_id": booking.ProfileID, "referral_status": "pending"}, bson.M{})
+	if err == nil {
+		defer referral.Close(context.Background())
+		var ref entity.ReferralDB
+		for referral.Next(context.Background()) {
+			err := referral.Decode(&ref)
+
+			if err == nil {
+				bonus := 40.0
+				value, err := cdb.GetCouponByType("referral")
+				if err == nil {
+					bonus = value.MaxValue
+				}
+				wall := entity.WalletS{
+					ID:             primitive.NewObjectID(),
+					UserID:         ref.ReferrerBy,
+					DepositedMoney: float64(bonus),
+					Description:    "Referral Bonus",
+				}
+				wallet.NewRepository("wallet").InsertOne(wall)
+				predef, err := predefnotification.Get("referalComplete")
+				if err == nil && predef.Name == "referalComplete" {
+					notify.NewService().SendNotification(predef.Title, predef.Body, ref.ReferrerBy, predef.Type, *ref.ReferredByProfile.FirebaseToken)
+				}
+				repoG.UpdateOne(bson.M{"referrer_by": ref.ReferrerBy, "referral_of_id": ref.ReferralOfId}, bson.M{"$set": bson.M{"referral_status": "completed"}})
+				break
+			}
+		}
+	}
+}
+
 func GetBooking(id string) (*entity.BookingOut, error) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.M{"_id": idObject}
+	filter := bson.D{{"_id", idObject}}
 	pipeline := createPipeline(filter)
 
 	booking, err := repo.Aggregate(pipeline)
@@ -483,4 +530,19 @@ func ChangeStatusStopped(id string, price float64, endTime int64, endKm float64)
 	db.UpdateUser(booking.ProfileID, profile)
 	_, err := repo.UpdateOne(filter, bson.M{"$set": set})
 	log.Println("error", err)
+}
+
+func (s *service) GetBookingByPlanAndID(planID, userId string) ([]entity.BookingOut, error) {
+	id, _ := primitive.ObjectIDFromHex(planID)
+	filter := bson.D{{Key: "plan._id", Value: id}, {Key: "profile_id", Value: userId}}
+	pipeline := createPipeline(filter)
+
+	booking, err := repo.Aggregate(pipeline)
+	if err != nil {
+		return nil, err
+	}
+	if len(booking) == 0 {
+		return nil, errors.New("booking not found")
+	}
+	return booking, nil
 }

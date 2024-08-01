@@ -56,6 +56,18 @@ func (s *service) AddPlan(plan entity.PlanDB) (string, error) {
 			}
 		}
 	}
+	if plan.Type == entity.Rental {
+		dat, err := s.GetPlans("rental", plan.City)
+		if err == nil && len(dat) > 0 {
+			for _, v := range dat {
+				if dat[0].IsActive != nil && *dat[0].IsActive && v.VehicleType == plan.VehicleType {
+					if plan.Validity == v.Validity {
+						return "", errors.New("rental plan already exist for this city")
+					}
+				}
+			}
+		}
+	}
 
 	plan.IsActive = new(bool)
 	*plan.IsActive = true

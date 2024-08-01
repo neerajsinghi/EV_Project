@@ -31,6 +31,13 @@ func GetCouponByCode(code string) (*entity.CouponReport, error) {
 	}
 	return &data, nil
 }
+func GetCouponByType(couponType string) (*entity.CouponReport, error) {
+	data, err := repo.FindOne(bson.M{"coupon_type": couponType}, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
 func (c *couponS) UpdateCoupon(id string, document entity.CouponDB) (string, error) {
 	var updateFields bson.M
 	idObject, _ := primitive.ObjectIDFromHex(id)

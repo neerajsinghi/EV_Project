@@ -6,6 +6,7 @@ import (
 	utils "bikeRental/pkg/util"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	trestCommon "github.com/Trestx-technology/trestx-common-go-lib"
 	"github.com/gorilla/mux"
@@ -37,6 +38,16 @@ func GetMyWallet(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	data, err := service.FindMy(id)
 	utils.SendOutput(err, w, r, data, nil, "GetMyWallet")
+}
+
+func GetWalletByPlanID(w http.ResponseWriter, r *http.Request) {
+	utils.SetOutput(w)
+	id := mux.Vars(r)["id"]
+	if strings.EqualFold(id, "all") {
+		id = ""
+	}
+	data, err := service.FindForPlan(id)
+	utils.SendOutput(err, w, r, data, nil, "GetWalletByPlayerID")
 }
 func getWallet(r *http.Request) (entity.WalletS, error) {
 	var wallet entity.WalletS
