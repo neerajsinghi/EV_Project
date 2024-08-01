@@ -3,6 +3,7 @@ package chronjobs
 import (
 	"fmt"
 	"futureEVChronJobs/pkg/entity"
+	"futureEVChronJobs/pkg/repo/bikeDevice"
 	bookedlogic "futureEVChronJobs/pkg/services/bookedBike/logic"
 	bdb "futureEVChronJobs/pkg/services/booking/db"
 	"futureEVChronJobs/pkg/services/city"
@@ -14,6 +15,7 @@ import (
 	"sort"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -54,6 +56,11 @@ func CheckBooking() {
 			} else {
 				motog.ImmoblizeDeviceRoadcast(booking.DeviceID, "engineStop")
 			}
+			filter := bson.M{"device_id": booking.DeviceID}
+			repoBike := bikeDevice.NewRepository("bikeDevice")
+
+			set := bson.M{"$set": bson.M{"immobilizeds": true}}
+			repoBike.UpdateOne(filter, bson.M{"$set": set})
 		}
 		sort.Slice(planList, func(i, j int) bool {
 			return planList[i].EndingMinutes < planList[j].EndingMinutes

@@ -2,6 +2,7 @@ package chronjobs
 
 import (
 	"bikeRental/pkg/entity"
+	"bikeRental/pkg/repo/bikeDevice"
 	bookedlogic "bikeRental/pkg/services/bookedBike/logic"
 	bdb "bikeRental/pkg/services/booking/db"
 	"bikeRental/pkg/services/city"
@@ -14,6 +15,7 @@ import (
 	"sort"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -122,6 +124,11 @@ func CheckBooking() {
 			} else {
 				motog.ImmoblizeDeviceRoadcast(booking.DeviceID, "engineStop")
 			}
+			filter := bson.M{"device_id": booking.DeviceID}
+			repoBike := bikeDevice.NewRepository("bikeDevice")
+
+			set := bson.M{"$set": bson.M{"immobilizeds": true}}
+			repoBike.UpdateOne(filter, bson.M{"$set": set})
 			//stop booking
 			totalDistance := booking.BikeWithDevice.TotalDistanceFloat
 			bdb.ChangeStatusStopped(booking.ID.Hex(), wallet.TotalBalance, time.Now().Unix(), totalDistance)

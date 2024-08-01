@@ -19,4 +19,5 @@ type WalletTotal struct {
 	TotalBalance    float64
 	RefundableMoney float64
 	UserData        *entity.ProfileDB
+	RefundPaymentID string
 }

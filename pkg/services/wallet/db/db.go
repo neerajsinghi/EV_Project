@@ -2,6 +2,7 @@ package db
 
 import (
 	"bikeRental/pkg/entity"
+	"bikeRental/pkg/repo/bikeDevice"
 	"bikeRental/pkg/repo/generic"
 	"bikeRental/pkg/repo/wallet"
 	bookingDB "bikeRental/pkg/services/booking/db"
@@ -78,15 +79,22 @@ func (s *service) InsertOne(document entity.WalletS) (WalletTotal, error) {
 		udb.NewService().UpdateUser(document.UserID, profile)
 	}
 	document.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
-	if document.PaymentID != "" && document.DepositedMoney > 0 {
+	if document.PaymentID != "" && document.DepositedMoney > 0 && document.RefundableMoney == 0 {
 		capture, err := utils.Capture(document.PaymentID, int(document.DepositedMoney))
 		if err != nil {
 			return WalletTotal{}, err
 		}
 		document.CaptureData = capture
 	}
-	if document.PaymentID != "" && document.RefundableMoney > 0 {
-		capture, err := utils.Capture(document.PaymentID, int(document.DepositedMoney))
+	if document.PaymentID != "" && document.RefundableMoney > 0 && document.DepositedMoney == 0 {
+		capture, err := utils.Capture(document.PaymentID, int(document.RefundableMoney))
+		if err != nil {
+			return WalletTotal{}, err
+		}
+		document.CaptureData = capture
+	}
+	if document.PaymentID != "" && document.RefundableMoney > 0 && document.DepositedMoney > 0 {
+		capture, err := utils.Capture(document.PaymentID, int(document.RefundableMoney+document.DepositedMoney))
 		if err != nil {
 			return WalletTotal{}, err
 		}
@@ -123,15 +131,40 @@ func getWalletTotal(userID string) (WalletTotal, error) {
 	}
 	var totalBalance float64
 	var refundableMoney float64
+	refundIDMap := make(map[string]bool)
 	for _, w := range wallets {
 		totalBalance += w.DepositedMoney
 		totalBalance -= w.UsedMoney
 		refundableMoney += w.RefundableMoney - w.RefundedMoney
+		if refundableMoney > 0 {
+			refundIDMap[w.PaymentID] = true
+		}
+	}
+	for _, w := range wallets {
+		if w.RefundedMoney > 0 {
+			if refundIDMap[w.PaymentID] {
+				refundIDMap[w.PaymentID] = false
+			}
+		}
+	}
+	if refundableMoney <= 0 {
+		refundIDMap = nil
+	}
+	refundID := ""
+	for key, value := range refundIDMap {
+		if value {
+			refundID = key
+			break
+		}
+	}
+	if refundID == "" {
+		refundableMoney = 0
 	}
 	walletL := WalletTotal{
 		Wallets:         wallets,
 		TotalBalance:    totalBalance,
 		RefundableMoney: refundableMoney,
+		RefundPaymentID: refundID,
 	}
 	return walletL, nil
 }
@@ -254,6 +287,12 @@ func (w *service) CheckMyBooking(userId string) {
 		} else {
 			motog.ImmoblizeDeviceRoadcast(booking.DeviceID, "engineStop")
 		}
+		filter := bson.M{"device_id": booking.DeviceID}
+		repoBike := bikeDevice.NewRepository("bikeDevice")
+
+		set := bson.M{"$set": bson.M{"immobilizeds": true}}
+		repoBike.UpdateOne(filter, bson.M{"$set": set})
+
 	}
 	sort.Slice(planList, func(i, j int) bool {
 		return planList[i].EndingMinutes < planList[j].EndingMinutes

@@ -333,7 +333,7 @@ func SendOutput(err error, w http.ResponseWriter, r *http.Request, data, body in
 	if err != nil {
 		commonGo.ECLog1(err)
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Something went wrong"})
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": err.Error()})
 		return
 	}
 	w.WriteHeader(http.StatusOK)
