@@ -6,6 +6,7 @@ import (
 	"bikeRental/pkg/repo/station"
 	"bikeRental/pkg/services/bikeDevice/db"
 	"context"
+	"errors"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -24,8 +25,27 @@ func NewService() Serv {
 func (s *service) AddStation(document entity.StationDB) (string, error) {
 	document.ID = primitive.NewObjectID()
 	document.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
-
-	return repo.InsertOne(document)
+	if document.SupervisorID == "" {
+		return "", errors.New("supervisor id is required")
+	} else {
+		if _, err := primitive.ObjectIDFromHex(document.SupervisorID); err != nil {
+			return "", errors.New("invalid supervisor id")
+		}
+	}
+	if document.Location == nil {
+		return "", errors.New("location is required")
+	}
+	if document.Address.City == "" {
+		return "", errors.New("city is required")
+	}
+	if document.Name == "" {
+		return "", errors.New("name is required")
+	}
+	data, err := repo.InsertOne(document)
+	if err != nil {
+		return "", errors.New("error in inserting station")
+	}
+	return data, nil
 }
 
 func (s *service) UpdateStation(id string, document entity.StationDB) (string, error) {
@@ -53,8 +73,18 @@ func (s *service) UpdateStation(id string, document entity.StationDB) (string, e
 	if document.Stock != nil {
 		update["stock"] = document.Stock
 	}
+	if document.SupervisorID != "" {
+		if _, err := primitive.ObjectIDFromHex(document.SupervisorID); err != nil {
+			return "", errors.New("invalid supervisor id")
+		}
+		update["supervisor_id"] = document.SupervisorID
+	}
 	update["update_at"] = primitive.NewDateTimeFromTime(time.Now())
-	return repo.UpdateOne(filter, bson.M{"$set": update})
+	data, err := repo.UpdateOne(filter, bson.M{"$set": update})
+	if err != nil {
+		return "", errors.New("error in updating station")
+	}
+	return data, nil
 }
 
 func (s *service) DeleteStation(id string) error {
@@ -110,14 +140,14 @@ func (s *service) GetStation(userId, stationId string) ([]entity.StationDB, erro
 
 	cursor, err := repoGeneric.Aggregate(pipeline)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("stations not found")
 	}
 	defer cursor.Close(context.Background())
 	var stations []entity.StationDB
 	for cursor.Next(context.Background()) {
 		var station entity.StationDB
 		if err = cursor.Decode(&station); err != nil {
-			return nil, err
+			continue
 		}
 		if station.Stock == nil {
 			station.Stock = new(int)
@@ -131,11 +161,18 @@ func (s *service) GetStation(userId, stationId string) ([]entity.StationDB, erro
 
 		stations = append(stations, station)
 	}
+	if len(stations) == 0 {
+		return nil, errors.New("stations not found")
+	}
 	return stations, err
 }
 func (s *service) GetStationByID(id string) (entity.StationDB, error) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
-	return repo.FindOne(bson.M{"_id": idObject}, bson.M{})
+	data, err := repo.FindOne(bson.M{"_id": idObject}, bson.M{})
+	if err != nil {
+		return entity.StationDB{}, errors.New("station not found")
+	}
+	return data, nil
 }
 
 func (s *service) GetNearByStation(lat, long float64, distance int) ([]entity.StationDB, error) {
@@ -151,7 +188,7 @@ func (s *service) GetNearByStation(lat, long float64, distance int) ([]entity.St
 		},
 	}, bson.M{})
 	if err != nil {
-		return nil, err
+		return nil, errors.New("stations not found")
 	}
 	for i := 0; i < len(resp); i++ {
 		bikes, err := db.NewService().FindBikeByStation(resp[i].ID.Hex())

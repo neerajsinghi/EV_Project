@@ -53,7 +53,7 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	}
 	userData, err := db.GetUser([]string{document.ProfileID})
 	if err != nil {
-		return "", err
+		return "", errors.New("user not found")
 	}
 	if len(userData) == 0 {
 		return "", errors.New("user not found")
@@ -67,7 +67,7 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	}
 	deviceData, err := bikedb.GetBike([]int{document.DeviceID})
 	if err != nil {
-		return "", err
+		return "", errors.New("device not found")
 	}
 	if len(deviceData) == 0 {
 		return "", errors.New("device not found")
@@ -82,7 +82,7 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 	}
 	station, err := sdb.NewService().GetStationByID(document.StartingStationID)
 	if err != nil {
-		return "", err
+		return "", errors.New("station not found")
 	}
 	if station.ID.Hex() == "" {
 		return "", errors.New("station not found")
@@ -146,13 +146,21 @@ func (s *service) AddBooking(document entity.BookingDB) (string, error) {
 			notify.NewService().SendNotification(predef.Title, predef.Body, document.ProfileID, predef.Type, *userData[0].FirebaseToken)
 		}
 	}
-	return repo.InsertOne(document)
+	success, err := repo.InsertOne(document)
+	if err != nil {
+		return "", errors.New("unable to  booking")
+	}
+	return success, nil
 }
 
 // DeleteBooking implements Booking.
 func (s *service) DeleteBooking(id string) error {
 	idObject, _ := primitive.ObjectIDFromHex(id)
-	return repo.DeleteOne(bson.M{"_id": idObject})
+	err := repo.DeleteOne(bson.M{"_id": idObject})
+	if err != nil {
+		return errors.New("unable to delete booking")
+	}
+	return nil
 }
 
 // GetAllBookings implements Booking.
@@ -171,7 +179,11 @@ func (s *service) GetAllBookings(status, bType, vType string) ([]entity.BookingO
 
 	pipeline := createPipeline(filter)
 
-	return repo.Aggregate(pipeline)
+	data, err := repo.Aggregate(pipeline)
+	if err != nil {
+		return nil, errors.New("unable to get booking")
+	}
+	return data, nil
 }
 
 func createPipeline(filter bson.D) primitive.A {
@@ -223,7 +235,11 @@ func GetAllHourlyBookings() ([]entity.BookingOut, error) {
 	}
 	pipeline := createPipeline(filter)
 
-	return repo.Aggregate(pipeline)
+	data, err := repo.Aggregate(pipeline)
+	if err != nil {
+		return nil, errors.New("unable to get booking")
+	}
+	return data, nil
 }
 func GetAllStartedBookings() ([]entity.BookingOut, error) {
 	filter := bson.D{
@@ -231,7 +247,11 @@ func GetAllStartedBookings() ([]entity.BookingOut, error) {
 	}
 	pipeline := createPipeline(filter)
 
-	return repo.Aggregate(pipeline)
+	data, err := repo.Aggregate(pipeline)
+	if err != nil {
+		return nil, errors.New("unable to get booking")
+	}
+	return data, nil
 }
 func GetMyBookingCount(userID string) (int64, error) {
 	filter := bson.M{"profile_id": userID}
@@ -246,8 +266,11 @@ func (s *service) GetAllMyBooking(userID, bType string) ([]entity.BookingOut, er
 	}
 	pipeline := createPipeline(filter)
 
-	return repo.Aggregate(pipeline)
-
+	data, err := repo.Aggregate(pipeline)
+	if err != nil {
+		return nil, errors.New("unable to get booking")
+	}
+	return data, nil
 }
 
 // GetMyBooking implements Booking.
@@ -289,7 +312,7 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 	deviceList = append(deviceList, booking.DeviceID)
 	devices, err = bikedb.GetBike(deviceList)
 	if err != nil {
-		return "", err
+		return "", errors.New("device not found")
 	}
 
 	if document.Price != nil {
@@ -436,7 +459,7 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 			},
 		)
 		if err != nil {
-			return "", err
+			return "", errors.New("unable to resume booking")
 		}
 		if booking.BikeWithDevice.Type == "moto" {
 			motog.ImmoblizeDevice(0, booking.BikeWithDevice.Name)
@@ -484,7 +507,7 @@ func referralPath(booking *entity.BookingOut) {
 
 func GetBooking(id string) (*entity.BookingOut, error) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.D{{"_id", idObject}}
+	filter := bson.D{{Key: "_id", Value: idObject}}
 	pipeline := createPipeline(filter)
 
 	booking, err := repo.Aggregate(pipeline)
@@ -539,7 +562,7 @@ func (s *service) GetBookingByPlanAndID(planID, userId string) ([]entity.Booking
 
 	booking, err := repo.Aggregate(pipeline)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("booking not found")
 	}
 	if len(booking) == 0 {
 		return nil, errors.New("booking not found")

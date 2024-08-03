@@ -106,7 +106,14 @@ func LoginUsingPhone(w http.ResponseWriter, r *http.Request) {
 
 	}
 	response, err := accountService.LoginUsingPhone(user.PhoneNo)
-	utils.SendOutput(err, w, r, response, user, "LoginUsingPhone")
+	if err != nil {
+		trestCommon.ECLog1(errors.Wrapf(err, "unable to login"))
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "User not registered"})
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(bson.M{"status": true, "error": "", "data": response})
 }
 func ForgetPasswordOTPLink(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)

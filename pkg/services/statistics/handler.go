@@ -1,4 +1,4 @@
-package status
+package statistics
 
 import (
 	utils "bikeRental/pkg/util"
@@ -16,9 +16,9 @@ func Statistics(w http.ResponseWriter, r *http.Request) {
 	endDate := r.URL.Query().Get("endDate")
 	city := r.URL.Query().Get("city")
 	service := r.URL.Query().Get("service")
-	start, _ := time.Parse("2006-01-02", startDate)
+	start, _ := time.Parse(time.RFC3339, startDate)
 
-	end, _ := time.Parse("2006-01-02", endDate)
+	end, _ := time.Parse(time.RFC3339, endDate)
 
 	data, err := Logic(start, end, city, service)
 	utils.SendOutput(err, w, r, data, nil, "Statistics")

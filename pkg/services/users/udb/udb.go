@@ -32,7 +32,7 @@ func (s *service) GetUserById(id string) (entity.ProfileOut, error) {
 	filter["status"] = bson.M{"$ne": "deleted"}
 	res, err := repo.Aggregate(createPipeline(filter))
 	if err != nil {
-		return entity.ProfileOut{}, err
+		return entity.ProfileOut{}, errors.New("user not found")
 	}
 	if len(res) == 0 {
 		return entity.ProfileOut{}, nil
@@ -76,6 +76,9 @@ func (s *service) GetUsers(userType string) ([]entity.ProfileOut, error) {
 		return res, err
 	}
 	res, err := repo.Aggregate(createPipeline(filter))
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
 	for i := 0; i < len(res); i++ {
 		res[i].Password = nil
 
@@ -304,7 +307,11 @@ func (s *service) RemovePlan(id, planID string) (string, error) {
 	set["plan_active"] = false
 	set["plan_start_time"] = 0
 	set["plan_end_time"] = 0
-	return repo.UpdateOne(filter, bson.M{"$set": set})
+	data, err := repo.UpdateOne(filter, bson.M{"$set": set})
+	if err != nil {
+		return "", errors.New("error in removing plan")
+	}
+	return data, nil
 }
 func ChangeServiceType(id string, serviceType string) (string, error) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
@@ -312,7 +319,11 @@ func ChangeServiceType(id string, serviceType string) (string, error) {
 	set := bson.M{}
 	set["service_type"] = serviceType
 	set["update_time"] = time.Now()
-	return repo.UpdateOne(filter, bson.M{"$set": set})
+	data, err := repo.UpdateOne(filter, bson.M{"$set": set})
+	if err != nil {
+		return "", errors.New("error in changing service type")
+	}
+	return data, nil
 }
 func RemovePlan(userId string) (string, error) {
 	idObject, _ := primitive.ObjectIDFromHex(userId)
@@ -328,5 +339,9 @@ func RemovePlan(userId string) (string, error) {
 	set["plan_active"] = false
 	set["plan_start_time"] = 0
 	set["plan_end_time"] = 0
-	return repo.UpdateOne(filter, bson.M{"$set": set})
+	data, err := repo.UpdateOne(filter, bson.M{"$set": set})
+	if err != nil {
+		return "", errors.New("error in removing plan")
+	}
+	return data, nil
 }

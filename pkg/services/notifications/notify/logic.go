@@ -49,5 +49,9 @@ func (s *str) SendMultipleNotifications(title, body, ntype string, userIds []str
 
 // GetAllNotifications implements Notify.
 func (s *str) GetAllNotifications() ([]entity.Notification, error) {
-	return repo.Find(nil, nil)
+	data, err := repo.Find(nil, nil)
+	if err != nil {
+		return nil, errors.New("error in finding notifications")
+	}
+	return data, nil
 }

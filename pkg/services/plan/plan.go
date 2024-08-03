@@ -26,11 +26,18 @@ func AddPlan(w http.ResponseWriter, r *http.Request) {
 	data, err := service.AddPlan(plan)
 	utils.SendOutput(err, w, r, data, plan, "AddPlan")
 }
-func GetAllPlans(w http.ResponseWriter, r *http.Request) {
+func GetAllUsersPlans(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
 	pType := r.URL.Query().Get("type")
 	city := r.URL.Query().Get("city")
 	data, err := service.GetPlans(pType, city)
+	utils.SendOutput(err, w, r, data, nil, "GetAllPlans")
+}
+func GetAllPlans(w http.ResponseWriter, r *http.Request) {
+	utils.SetOutput(w)
+	pType := r.URL.Query().Get("type")
+	city := r.URL.Query().Get("city")
+	data, err := service.GetPlansAdmin(pType, city)
 	utils.SendOutput(err, w, r, data, nil, "GetAllPlans")
 }
 func GetPlanById(w http.ResponseWriter, r *http.Request) {

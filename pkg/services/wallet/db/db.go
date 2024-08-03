@@ -14,6 +14,7 @@ import (
 	"bikeRental/pkg/services/users/udb"
 	utils "bikeRental/pkg/util"
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -68,6 +69,10 @@ func (s *service) InsertOne(document entity.WalletS) (WalletTotal, error) {
 		document.Booking = booking
 	}
 	if document.PlanID != "" {
+		if user.PlanEndTime > 0 && user.PlanEndTime > time.Now().Unix() {
+			return WalletTotal{}, errors.New("user already has a plan")
+		}
+
 		plan, err := pdb.NewService().GetPlan(document.PlanID)
 		if err != nil {
 			return WalletTotal{}, err
@@ -110,7 +115,7 @@ func (s *service) InsertOne(document entity.WalletS) (WalletTotal, error) {
 	_, err = repo.InsertOne(document)
 
 	if err != nil {
-		return WalletTotal{}, err
+		return WalletTotal{}, errors.New("error inserting wallet")
 	}
 	if document.RefundedMoney != 0 {
 		if user.FirebaseToken != nil {
@@ -121,7 +126,11 @@ func (s *service) InsertOne(document entity.WalletS) (WalletTotal, error) {
 	if document.DepositedMoney > 0 && document.PaymentID != "" {
 		s.CheckMyBooking(document.UserID)
 	}
-	return getWalletTotal(document.UserID)
+	data, err := getWalletTotal(document.UserID)
+	if err != nil {
+		return WalletTotal{}, errors.New("error getting wallet total")
+	}
+	return data, nil
 }
 
 func getWalletTotal(userID string) (WalletTotal, error) {
@@ -225,7 +234,7 @@ func getWalletTotalForPlan(plan string) ([]entity.WalletS, error) {
 	var repoG = generic.NewRepository("wallet")
 	cursor, err := repoG.Aggregate(pipelineL)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("error getting wallet total")
 	}
 	defer cursor.Close(context.Background())
 	var wallets []entity.WalletS
@@ -247,6 +256,9 @@ func getWalletTotalForPlan(plan string) ([]entity.WalletS, error) {
 		}
 		wallet.Bookings = nil
 		wallets = append(wallets, wallet)
+	}
+	if len(wallets) == 0 {
+		return nil, errors.New("no wallet found")
 	}
 	return wallets, nil
 }

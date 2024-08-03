@@ -3,6 +3,7 @@ package feedback
 import (
 	"bikeRental/pkg/entity"
 	feedbackrepo "bikeRental/pkg/repo/feedback"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,7 +18,11 @@ func New() FeedbackI {
 }
 
 func (f *feed) AddFeedback(feedback entity.Feedback) (string, error) {
-	return repo.InsertOne(feedback)
+	data, err := repo.InsertOne(feedback)
+	if err != nil {
+		return "", errors.New("error in inserting feedback")
+	}
+	return data, nil
 }
 
 func (f *feed) GetFeedbacks() ([]entity.FeedbackOut, error) {
@@ -63,11 +68,19 @@ func (f *feed) GetFeedbacks() ([]entity.FeedbackOut, error) {
 			},
 		},
 	}
-	return repo.Aggregate(pipeline)
+	data, err := repo.Aggregate(pipeline)
+	if err != nil {
+		return nil, errors.New("error in finding feedback")
+	}
+	return data, nil
 
 }
 
 func (f *feed) DeleteFeedback(feedbackID string) error {
 	idObj, _ := primitive.ObjectIDFromHex(feedbackID)
-	return repo.DeleteOne(bson.M{"_id": idObj})
+	err := repo.DeleteOne(bson.M{"_id": idObj})
+	if err != nil {
+		return errors.New("error in deleting feedback")
+	}
+	return nil
 }

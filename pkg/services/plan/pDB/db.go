@@ -24,6 +24,12 @@ func NewService() PlanI {
 func (s *service) AddPlan(plan entity.PlanDB) (string, error) {
 	plan.ID = primitive.NewObjectID()
 	plan.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
+	if plan.City == "" {
+		return "", errors.New("city is required")
+	}
+	if plan.VehicleType == "" {
+		return "", errors.New("vehicle type is required")
+	}
 	if plan.Price == 0 && plan.Deposit == nil {
 		return "", errors.New("price is required")
 	}
@@ -57,15 +63,9 @@ func (s *service) AddPlan(plan entity.PlanDB) (string, error) {
 		}
 	}
 	if plan.Type == entity.Rental {
-		dat, err := s.GetPlans("rental", plan.City)
-		if err == nil && len(dat) > 0 {
-			for _, v := range dat {
-				if dat[0].IsActive != nil && *dat[0].IsActive && v.VehicleType == plan.VehicleType {
-					if plan.Validity == v.Validity {
-						return "", errors.New("rental plan already exist for this city")
-					}
-				}
-			}
+		dat, err := repo.FindOne(bson.M{"city": plan.City, "vehicle_type": plan.VehicleType, "validity": plan.Validity}, bson.M{})
+		if err == nil && dat.City != "" {
+			return "", errors.New("rental plan already exist for this city")
 		}
 	}
 
@@ -75,24 +75,51 @@ func (s *service) AddPlan(plan entity.PlanDB) (string, error) {
 		plan.Deposit = new(float64)
 		*plan.Deposit = 0
 	}
-	return repo.InsertOne(plan)
+	data, err := repo.InsertOne(plan)
+	if err != nil {
+		return "", errors.New("error in inserting plan")
+	}
+	return data, nil
 }
 
 // DeletePlan implements PlanI.
 func (s *service) DeletePlan(id string) error {
 	idObject, _ := primitive.ObjectIDFromHex(id)
-	return repo.DeleteOne(bson.M{"_id": idObject})
+	err := repo.DeleteOne(bson.M{"_id": idObject})
+	if err != nil {
+		return errors.New("error in deleting plan")
+	}
+	return nil
 }
 
 // GetPlan implements PlanI.
 func (s *service) GetPlan(id string) (entity.PlanDB, error) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
-	return repo.FindOne(bson.M{"_id": idObject}, bson.M{})
-
+	data, err := repo.FindOne(bson.M{"_id": idObject}, bson.M{})
+	if err != nil {
+		return entity.PlanDB{}, errors.New("error in finding plan")
+	}
+	return data, nil
 }
 
 // GetPlans implements PlanI.
 func (s *service) GetPlans(pType, city string) ([]entity.PlanDB, error) {
+	filter := bson.M{"is_active": true}
+	if pType != "" {
+		filter["type"] = pType
+	}
+	if city != "" {
+		filter["city"] = city
+	}
+	data, err := repo.Find(filter, bson.M{})
+	if err != nil {
+		return nil, errors.New("error in finding plans")
+	}
+	return data, nil
+}
+
+// GetPlans implements PlanI.
+func (s *service) GetPlansAdmin(pType, city string) ([]entity.PlanDB, error) {
 	filter := bson.M{}
 	if pType != "" {
 		filter["type"] = pType
@@ -100,8 +127,11 @@ func (s *service) GetPlans(pType, city string) ([]entity.PlanDB, error) {
 	if city != "" {
 		filter["city"] = city
 	}
-	return repo.Find(filter, bson.M{})
-
+	data, err := repo.Find(filter, bson.M{})
+	if err != nil {
+		return nil, errors.New("error in finding plans")
+	}
+	return data, nil
 }
 
 // UpdatePlan implements PlanI.
@@ -148,8 +178,11 @@ func (s *service) UpdatePlan(id string, plan entity.PlanDB) (string, error) {
 
 	set["updated_at"] = primitive.NewDateTimeFromTime(time.Now())
 
-	return repo.UpdateOne(bson.M{"_id": idObject}, bson.M{"$set": set})
-
+	data, err := repo.UpdateOne(bson.M{"_id": idObject}, bson.M{"$set": set})
+	if err != nil {
+		return "", errors.New("error in updating plan")
+	}
+	return data, nil
 }
 
 func GetDeposit(city, planType string) (float64, error) {

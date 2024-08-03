@@ -3,6 +3,7 @@ package vdb
 import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/repo/vehicleType"
+	"errors"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -32,23 +33,43 @@ func (s *service) UpdateVehicleType(id string, document entity.VehicleTypeDB) (s
 	document.ID = idObject
 	conv, _ := bson.Marshal(document)
 	bson.Unmarshal(conv, &updateFields)
-	return repo.UpdateOne(bson.M{"_id": idObject}, bson.M{"$set": updateFields})
+	data, err := repo.UpdateOne(bson.M{"_id": idObject}, bson.M{"$set": updateFields})
+	if err != nil {
+		return "", errors.New("error in updating vehicle type")
+	}
+	return data, err
 }
 
 func (s *service) DeleteVehicleType(id string) error {
 	idObject, _ := primitive.ObjectIDFromHex(id)
-	return repo.DeleteOne(bson.M{"_id": idObject})
+	err := repo.DeleteOne(bson.M{"_id": idObject})
+	if err != nil {
+		return errors.New("error in deleting vehicle type")
+	}
+	return err
 }
 
 func (s *service) GetVehicleType() ([]entity.VehicleTypeDB, error) {
-	return repo.Find(bson.M{}, bson.M{})
+	data, err := repo.Find(bson.M{}, bson.M{})
+	if err != nil {
+		return nil, errors.New("error in getting vehicle type")
+	}
+	return data, err
 }
 
 func (s *service) GetVehicleTypeByID(id string) (entity.VehicleTypeDB, error) {
 	idObject, _ := primitive.ObjectIDFromHex(id)
-	return repo.FindOne(bson.M{"_id": idObject}, bson.M{})
+	data, err := repo.FindOne(bson.M{"_id": idObject}, bson.M{})
+	if err != nil {
+		return entity.VehicleTypeDB{}, errors.New("error in getting vehicle type")
+	}
+	return data, err
 }
 
 func GetVehicleType(vehicleTypeIDs []primitive.ObjectID) ([]entity.VehicleTypeDB, error) {
-	return repo.Find(bson.M{"_id": bson.M{"$in": vehicleTypeIDs}}, bson.M{})
+	data, err := repo.Find(bson.M{"_id": bson.M{"$in": vehicleTypeIDs}}, bson.M{})
+	if err != nil {
+		return nil, errors.New("error in getting vehicle type")
+	}
+	return data, err
 }

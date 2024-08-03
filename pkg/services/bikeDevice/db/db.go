@@ -66,7 +66,7 @@ func (s *service) FindBikeByDeviceID(deviceId string) ([]entity.DeviceInfo, erro
 	pipeline := createPipeline(bson.D{{Key: "device_id", Value: deviceIdIn}})
 	data, err := repo.Aggregate(pipeline)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("device not found")
 	}
 	for i, v := range data {
 		if len(v.Stations) > 0 {
@@ -93,6 +93,18 @@ func (s *service) AddBikeDevice(document entity.DeviceInfo) (string, error) {
 	if len(device) > 0 {
 		return "", errors.New("device already exists")
 	}
+	if document.StationID == nil {
+		return "", errors.New("station id is required")
+	} else {
+		if _, err := primitive.ObjectIDFromHex(*document.StationID); err != nil {
+			return "", errors.New("invalid station id")
+		}
+	}
+	if document.VehicleTypeID != "" {
+		if _, err := primitive.ObjectIDFromHex(document.VehicleTypeID); err != nil {
+			return "", errors.New("invalid vehicle type id")
+		}
+	}
 	return repo.InsertOne(document)
 }
 
@@ -102,12 +114,18 @@ func (s *service) UpdateBikeDevice(id string, document entity.DeviceInfo) (strin
 	set := bson.M{}
 
 	if document.StationID != nil && *document.StationID != "" {
+		if _, err := primitive.ObjectIDFromHex(*document.StationID); err != nil {
+			return "", errors.New("invalid station id")
+		}
 		set["station_id"] = *document.StationID
 	}
 	if document.Status != "" {
 		set["status"] = document.Status
 	}
 	if document.VehicleTypeID != "" {
+		if _, err := primitive.ObjectIDFromHex(document.VehicleTypeID); err != nil {
+			return "", errors.New("invalid vehicle type id")
+		}
 		set["vehicle_type_id"] = document.VehicleTypeID
 	}
 	if document.Description != "" {
@@ -127,7 +145,7 @@ func (s *service) FindAll() ([]entity.DeviceInfo, error) {
 
 	data, err := repo.Aggregate(pipeline)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("device not found")
 	}
 	for i, v := range data {
 		if len(v.Stations) > 0 {
@@ -161,7 +179,7 @@ func (*service) FindBikeByStation(stationID string) ([]entity.DeviceInfo, error)
 	pipeline := createPipeline(bson.D{{Key: "station_id", Value: stationID}})
 	data, err := repo.Aggregate(pipeline)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("device not found")
 	}
 	for i, v := range data {
 		if len(v.Stations) > 0 {

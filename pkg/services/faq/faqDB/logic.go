@@ -2,6 +2,7 @@ package faqdb
 
 import (
 	"bikeRental/pkg/entity"
+	"errors"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,7 +12,11 @@ import (
 func (*service) AddFaq(faq entity.FAQDB) (string, error) {
 	faq.ID = primitive.NewObjectID()
 	faq.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
-	return repo.InsertOne(faq)
+	data, err := repo.InsertOne(faq)
+	if err != nil {
+		return "", errors.New("error in inserting faq")
+	}
+	return data, nil
 }
 
 func (*service) UpdateFaq(id string, faq entity.FAQDB) (string, error) {
@@ -26,14 +31,26 @@ func (*service) UpdateFaq(id string, faq entity.FAQDB) (string, error) {
 	}
 	set["updated_at"] = primitive.NewDateTimeFromTime(time.Now())
 
-	return repo.UpdateOne(bson.M{"_id": idObject}, bson.M{"$set": set})
+	data, err := repo.UpdateOne(bson.M{"_id": idObject}, bson.M{"$set": set})
+	if err != nil {
+		return "", errors.New("error in updating faq")
+	}
+	return data, nil
 }
 
 func (*service) DeleteFaq(id string) error {
 	idObject, _ := primitive.ObjectIDFromHex(id)
-	return repo.DeleteOne(bson.M{"_id": idObject})
+	err := repo.DeleteOne(bson.M{"_id": idObject})
+	if err != nil {
+		return errors.New("error in deleting faq")
+	}
+	return nil
 }
 
 func (*service) GetAllFaq() ([]entity.FAQDB, error) {
-	return repo.Find(bson.M{}, bson.M{})
+	data, err := repo.Find(bson.M{}, bson.M{})
+	if err != nil {
+		return nil, errors.New("error in finding faq")
+	}
+	return data, nil
 }

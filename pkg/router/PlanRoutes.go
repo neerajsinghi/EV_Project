@@ -13,6 +13,12 @@ var planRoutes = Routes{
 		"Get All Plans",
 		"GET",
 		"/plan",
+		plan.GetAllUsersPlans,
+	},
+	Route{
+		"Get Admin Plans",
+		"GET",
+		"/plan/by/admin",
 		plan.GetAllPlans,
 	},
 	Route{

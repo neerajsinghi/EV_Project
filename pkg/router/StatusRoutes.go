@@ -1,6 +1,6 @@
 package router
 
-import status "bikeRental/pkg/services/status"
+import status "bikeRental/pkg/services/statistics"
 
 var statusRoutes = Routes{
 	Route{
