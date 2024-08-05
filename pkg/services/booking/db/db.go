@@ -403,16 +403,19 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 									discount = coupon.MinValue
 								}
 								price = price - discount
+								set["discounted_amount"] = discount
 							} else if coupon.CouponType == "freeRide" {
 								if price > coupon.MaxValue {
 									price = price - coupon.MaxValue
+									set["discounted_amount"] = coupon.MaxValue
 								} else {
+									set["discounted_amount"] = price
 									price = 0
 								}
 							}
 						}
 					}
-					set["price"] = price
+
 					wall := entity.WalletS{
 						ID:          primitive.NewObjectID(),
 						UserID:      booking.ProfileID,

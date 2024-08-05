@@ -21,6 +21,10 @@ type CouponDB struct {
 	ValidTill      time.Time          `json:"validTill" bson:"valid_till"`
 	Description    string             `json:"description" bson:"description"`
 	CreatedTime    primitive.DateTime `json:"createdTime" bson:"created_time"`
+	Bookings       []BookingDB        `json:"bookings" bson:"bookings"`
+	Wallets        []WalletS          `json:"wallets" bson:"wallets"`
+	BookingCount   *int               `json:"bookingCount" bson:"booking_count"`
+	WalletCount    *int               `json:"walletCount" bson:"wallet_count"`
 }
 
 type CouponReport struct {

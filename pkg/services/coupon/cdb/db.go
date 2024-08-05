@@ -3,6 +3,8 @@ package cdb
 import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/repo/coupon"
+	"bikeRental/pkg/repo/generic"
+	"context"
 	"errors"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 )
 
 var repo = coupon.NewRepository("coupon")
+var repoG = generic.NewRepository("coupon")
 
 type couponS struct{}
 
@@ -68,9 +71,42 @@ func (c *couponS) DeleteCoupon(id string) error {
 }
 
 func (c *couponS) GetCoupon() ([]entity.CouponDB, error) {
-	data, err := repo.Find(bson.M{}, bson.M{})
+
+	cursor, err := repoG.Aggregate(bson.A{
+		bson.D{{
+			Key: "$lookup",
+			Value: bson.D{
+				{Key: "from", Value: "booking"},
+				{Key: "localField", Value: "code"},
+				{Key: "foreignField", Value: "coupon_code"},
+				{Key: "as", Value: "bookings"},
+			}},
+		},
+		bson.D{{
+			Key: "$lookup",
+			Value: bson.D{
+				{Key: "from", Value: "wallet"},
+				{Key: "localField", Value: "code"},
+				{Key: "foreignField", Value: "coupon_code"},
+				{Key: "as", Value: "wallets"},
+			},
+		}},
+	})
 	if err != nil {
 		return nil, errors.New("error in finding coupon")
+	}
+	defer cursor.Close(context.Background())
+	var data []entity.CouponDB
+	for cursor.Next(context.Background()) {
+		var coupon entity.CouponDB
+		if err = cursor.Decode(&coupon); err != nil {
+			continue
+		}
+		coupon.BookingCount = new(int)
+		coupon.WalletCount = new(int)
+		*coupon.BookingCount = len(coupon.Bookings)
+		*coupon.WalletCount = len(coupon.Wallets)
+		data = append(data, coupon)
 	}
 	return data, nil
 }

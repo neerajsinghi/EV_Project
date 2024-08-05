@@ -39,7 +39,8 @@ func GetDataFromPullAPI() {
 	if len(token) < 2 {
 		return
 	}
-	url := "https://api-track-py.roadcast.co.in/api/v1/auth/token/pull_api?token=" + token[1]
+	baseUrlAuth := viper.GetString("pullapi.baseurlauth")
+	url := baseUrlAuth + "token/pull_api?token=" + token[1]
 	method := "GET"
 
 	client := &http.Client{}
@@ -104,8 +105,8 @@ func GetDataFromPullAPI() {
 func roadCastSignin() *token {
 	username := viper.GetString("pullapi.username")
 	password := viper.GetString("pullapi.password")
-
-	url := "https://api-track-py.roadcast.co.in/api/v1/auth/login"
+	baseUrlAuth := viper.GetString("pullapi.baseurlauth")
+	url := baseUrlAuth + "login"
 	method := "POST"
 
 	payload := strings.NewReader(`{
@@ -151,7 +152,8 @@ func ImmoblizeDeviceRoadcast(deviceID int, action string) {
 	if token == nil {
 		return
 	}
-	url := "https://api-track-py.roadcast.co.in/api/v1/auth/set_owl_mode"
+	baseUrlAuth := viper.GetString("pullapi.baseurlauth")
+	url := baseUrlAuth + "set_owl_mode"
 	method := "POST"
 
 	payload := strings.NewReader(`{
