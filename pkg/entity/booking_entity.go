@@ -28,6 +28,7 @@ type BookingDB struct {
 	EndingStation       *StationDB         `bson:"ending_station" json:"endingStation"`
 	CouponCode          string             `bson:"coupon_code" json:"couponCode"`
 	Discount            float64            `bson:"discount" json:"discount"`
+	CouponType          string             `bson:"coupon_type" json:"couponType"`
 	GreenPoints         int64              `bson:"green_points" json:"greenPoints"`
 	CarbonSaved         float64            `bson:"carbon_saved" json:"carbonSaved"`
 	City                string             `bson:"city" json:"city"`

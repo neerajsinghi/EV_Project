@@ -25,6 +25,7 @@ type WalletS struct {
 	BookingCount     *int                `json:"bookingCount" bson:"bookingCount"`
 	CaptureData      interface{}         `json:"captureData" bson:"capture_data"`
 	CouponCode       string              `json:"couponCode" bson:"coupon_code"`
+	CouponType       string              `bson:"coupon_type" json:"couponType"`
 	DiscountPercent  float64             `json:"discountPercent" bson:"discountPercent"`
 	DiscountedAmount float64             `json:"discountedAmount" bson:"discountedAmount"`
 	NumberUsed       int                 `json:"numberUsed" bson:"numberUsed"`

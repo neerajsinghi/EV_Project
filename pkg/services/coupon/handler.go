@@ -55,7 +55,20 @@ func DeleteCoupon(w http.ResponseWriter, r *http.Request) {
 // GetCoupon gets a coupon
 func GetCoupons(w http.ResponseWriter, r *http.Request) {
 	utils.SetOutput(w)
-	data, err := coupon.GetCoupon()
+	city := r.URL.Query().Get("city")
+	typeC := r.URL.Query().Get("type")
+	var err error
+	var data []entity.CouponDB
+	if city == "" && typeC == "" {
+		data, err = coupon.GetCoupon()
+	} else if city != "" && typeC != "" {
+		data, err = coupon.GetCouponByCityAndType(typeC, city)
+	} else if city != "" {
+		data, err = coupon.GetCouponByCity(city)
+	} else {
+		data, err = coupon.GetCouponByType(typeC)
+	}
+
 	utils.SendOutput(err, w, r, data, nil, "GetCoupon")
 }
 

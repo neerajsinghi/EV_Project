@@ -16,7 +16,7 @@ type service struct{}
 func createPipeline(filter bson.D) bson.A {
 	pipeline := bson.A{}
 	if filter != nil {
-		pipeline = append(pipeline, bson.D{{Key: "$match", Value: filter}})
+		pipeline = append(pipeline, bson.E{Key: "$match", Value: filter})
 	}
 	return append(pipeline, bson.A{
 		bson.D{

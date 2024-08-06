@@ -25,6 +25,17 @@ func NewService() Serv {
 func (s *service) AddStation(document entity.StationDB) (string, error) {
 	document.ID = primitive.NewObjectID()
 	document.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
+	if document.Location.Coordinates != nil {
+		if len(document.Location.Coordinates) == 2 {
+			if document.Location.Coordinates[0] == 0 || document.Location.Coordinates[1] == 0 {
+				return "", errors.New("invalid coordinates")
+			}
+		} else {
+			return "", errors.New("invalid coordinates")
+		}
+	} else {
+		return "", errors.New("coordinates is required")
+	}
 	if document.SupervisorID == "" {
 		return "", errors.New("supervisor id is required")
 	} else {

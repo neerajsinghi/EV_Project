@@ -7,4 +7,7 @@ type Coupon interface {
 	UpdateCoupon(id string, document entity.CouponDB) (string, error)
 	DeleteCoupon(id string) error
 	GetCoupon() ([]entity.CouponDB, error)
+	GetCouponByType(couponType string) ([]entity.CouponDB, error)
+	GetCouponByCity(city string) ([]entity.CouponDB, error)
+	GetCouponByCityAndType(city, couponType string) ([]entity.CouponDB, error)
 }
