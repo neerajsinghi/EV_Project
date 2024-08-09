@@ -32,8 +32,8 @@ func (c *couponS) AddCoupon(document entity.CouponDB) (string, error) {
 		}
 	}
 	if strings.EqualFold(document.CouponType, "firstRide") {
-		coupon, err := repo.FindOne(bson.M{"coupon_type": "firstRide", "city": document.City}, bson.M{})
-		if err == nil || coupon.Code != "" {
+		coupon, _ := repo.FindOne(bson.M{"coupon_type": "firstRide", "city": document.City}, bson.M{})
+		if coupon.Code != "" {
 			return "", errors.New("first ride coupon already exists")
 		}
 		if document.City == nil {
