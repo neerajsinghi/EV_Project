@@ -26,11 +26,10 @@ func (c *couponS) AddCoupon(document entity.CouponDB) (string, error) {
 	document.ID = primitive.NewObjectID()
 	document.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
 	if strings.EqualFold(document.CouponType, "Referral") {
-		coupon, err := GetCouponByType("Referral")
-		if err == nil || coupon != nil {
+		coupon, _ := GetCouponByType("Referral")
+		if coupon.Code != "" {
 			return "", errors.New("referral coupon already exists")
 		}
-		document.Code = "REF" + primitive.NewObjectID().Hex()
 	}
 	if strings.EqualFold(document.CouponType, "firstRide") {
 		coupon, err := repo.FindOne(bson.M{"coupon_type": "firstRide", "city": document.City}, bson.M{})
@@ -252,6 +251,58 @@ func (c *couponS) GetCouponByType(couponType string) ([]entity.CouponDB, error) 
 		coupon.WalletCount = new(int)
 		*coupon.BookingCount = len(coupon.Bookings)
 		*coupon.WalletCount = len(coupon.Wallets)
+		data = append(data, coupon)
+	}
+	return data, nil
+}
+
+func (c *couponS) GetCouponForUser(userID, couponType string) ([]entity.CouponDB, error) {
+	cursor, err := repoG.Aggregate(bson.A{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "user_id", Value: userID}, {Key: "service_type", Value: couponType}}}},
+		bson.D{{
+			Key: "$lookup",
+			Value: bson.D{
+				{Key: "from", Value: "booking"},
+				{Key: "localField", Value: "code"},
+				{Key: "foreignField", Value: "coupon_code"},
+				{Key: "as", Value: "bookings"},
+			}},
+		},
+		bson.D{{
+			Key: "$lookup",
+			Value: bson.D{
+				{Key: "from", Value: "wallet"},
+				{Key: "localField", Value: "code"},
+				{Key: "foreignField", Value: "coupon_code"},
+				{Key: "as", Value: "wallets"},
+			},
+		}},
+	})
+	if err != nil {
+		return nil, errors.New("error in finding coupon")
+	}
+	defer cursor.Close(context.Background())
+	var data []entity.CouponDB
+	for cursor.Next(context.Background()) {
+		var coupon entity.CouponDB
+		if err = cursor.Decode(&coupon); err != nil {
+			continue
+		}
+		coupon.BookingCount = new(int)
+		coupon.WalletCount = new(int)
+		bookings := 0
+		*coupon.WalletCount = 0
+		for _, booking := range coupon.Bookings {
+			if booking.ProfileID == userID {
+				bookings++
+			}
+		}
+		*coupon.BookingCount = bookings
+		for _, wallet := range coupon.Wallets {
+			if wallet.UserID == userID {
+				*coupon.WalletCount++
+			}
+		}
 		data = append(data, coupon)
 	}
 	return data, nil

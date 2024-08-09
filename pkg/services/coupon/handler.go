@@ -71,7 +71,14 @@ func GetCoupons(w http.ResponseWriter, r *http.Request) {
 
 	utils.SendOutput(err, w, r, data, nil, "GetCoupon")
 }
+func GetCouponsForUsers(w http.ResponseWriter, r *http.Request) {
+	utils.SetOutput(w)
+	typeC := r.URL.Query().Get("type")
+	id := mux.Vars(r)["id"]
 
+	data, err := coupon.GetCouponForUser(id, typeC)
+	utils.SendOutput(err, w, r, data, nil, "GetCouponForUser")
+}
 func getCoupon(r *http.Request) (entity.CouponDB, error) {
 	var coupon entity.CouponDB
 	err := json.NewDecoder(r.Body).Decode(&coupon)

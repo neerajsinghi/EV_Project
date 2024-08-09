@@ -7,6 +7,7 @@ import (
 	userattendance "bikeRental/pkg/services/userAttendance"
 	utils "bikeRental/pkg/util"
 	"math/rand"
+	"net/mail"
 	"strconv"
 	"strings"
 
@@ -46,12 +47,27 @@ func (*accountService) SignUp(cred Credentials) (string, error) {
 		*cred.Role = "user"
 	}
 	if cred.PhoneNo == "" {
-		err := errors.New("email or phone number required")
+		err := errors.New("phone number required")
 		trestCommon.ECLog2("sign up failed email or phone number required", err)
 		return "", err
 
 	}
 	cred.Email = strings.ToLower(cred.Email)
+	if cred.Email != "" {
+		//validate email format
+		_, err := mail.ParseAddress(cred.Email)
+		if err != nil {
+			trestCommon.ECLog2("sign up failed invalid email format", err)
+			return "", errors.New("sign up failed invalid email format")
+		}
+	}
+	if cred.ReferralCode != nil && *cred.ReferralCode != "" {
+		_, err := repo.FindOne(bson.M{"referral_code": *cred.ReferralCode}, bson.M{})
+		if err != nil {
+			trestCommon.ECLog2("sign up failed invalid referral code", err)
+			return "", errors.New("sign up failed invalid referral code")
+		}
+	}
 	_, err := CheckUser(cred.Email, cred.PhoneNo)
 
 	if err != nil {

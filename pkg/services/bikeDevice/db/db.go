@@ -16,7 +16,7 @@ type service struct{}
 func createPipeline(filter bson.D) bson.A {
 	pipeline := bson.A{}
 	if filter != nil {
-		pipeline = append(pipeline, bson.E{Key: "$match", Value: filter})
+		pipeline = append(pipeline, bson.D{{Key: "$match", Value: filter}})
 	}
 	return append(pipeline, bson.A{
 		bson.D{
@@ -72,9 +72,11 @@ func (s *service) FindBikeByDeviceID(deviceId string) ([]entity.DeviceInfo, erro
 		if len(v.Stations) > 0 {
 			data[i].Station = &v.Stations[0]
 		}
+		if v.DeviceData.BatteryLevel < 20 {
+			return nil, errors.New("battery level is low")
+		}
 	}
 	return data, nil
-
 }
 
 var (
