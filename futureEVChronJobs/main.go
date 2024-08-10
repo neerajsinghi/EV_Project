@@ -36,8 +36,15 @@ func main() {
 			time.Sleep(time.Minute)
 		}
 	}()
+	go func() {
+		for {
+			chronjobs.GetUsersWithPlan()
+			time.Sleep(time.Minute)
+		}
+	}()
 	for {
 		log.Println("Running")
 		time.Sleep(time.Minute * 500)
 	}
+
 }
