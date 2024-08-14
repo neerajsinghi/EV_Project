@@ -4,6 +4,8 @@ import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/repo/plan"
 	"errors"
+	"sort"
+	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -115,6 +117,18 @@ func (s *service) GetPlans(pType, city string) ([]entity.PlanDB, error) {
 	if err != nil {
 		return nil, errors.New("error in finding plans")
 	}
+	if pType == string(entity.Rental) {
+		sort.Slice(data, func(i, j int) bool {
+			validityI, _ := strconv.Atoi(data[i].Validity)
+			validityJ, _ := strconv.Atoi(data[j].Validity)
+			return validityI < validityJ
+		})
+	}
+	if pType == string(entity.Hourly) {
+		sort.Slice(data, func(i, j int) bool {
+			return data[i].StartingMinutes < data[j].StartingMinutes
+		})
+	}
 	return data, nil
 }
 
@@ -130,6 +144,18 @@ func (s *service) GetPlansAdmin(pType, city string) ([]entity.PlanDB, error) {
 	data, err := repo.Find(filter, bson.M{})
 	if err != nil {
 		return nil, errors.New("error in finding plans")
+	}
+	if pType == string(entity.Rental) {
+		sort.Slice(data, func(i, j int) bool {
+			validityI, _ := strconv.Atoi(data[i].Validity)
+			validityJ, _ := strconv.Atoi(data[j].Validity)
+			return validityI < validityJ
+		})
+	}
+	if pType == string(entity.Hourly) {
+		sort.Slice(data, func(i, j int) bool {
+			return data[i].StartingMinutes < data[j].StartingMinutes
+		})
 	}
 	return data, nil
 }

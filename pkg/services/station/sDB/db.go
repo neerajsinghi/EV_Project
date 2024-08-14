@@ -197,6 +197,7 @@ func (s *service) GetNearByStation(lat, long float64, distance int) ([]entity.St
 				"$maxDistance": distance,
 			},
 		},
+		"status": "available",
 	}, bson.M{})
 	if err != nil {
 		return nil, errors.New("stations not found")

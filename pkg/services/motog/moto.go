@@ -4,6 +4,7 @@ import (
 	"bikeRental/pkg/entity"
 	"bikeRental/pkg/repo/generic"
 	iotbike "bikeRental/pkg/repo/iot_bike"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -252,16 +253,21 @@ func ImmoblizeDevice(immoblize int, chasisNumber string) {
 	if data.ResponseData.IDToken != "" {
 		url := viper.GetString("motoapi.urlapp") + "/cloudControlCommand"
 		method := "POST"
-		payload := strings.NewReader(`{
-			"app_code": "` + viper.GetString("motoapi.appcode") + `",
-			"chassis_num": "` + chasisNumber + `",
-			"command": "IMMOBILIZE",
-			"value": "` + strconv.Itoa(immoblize) + `",
-			"param_name": "DEVICE_UPDATE",
-		}`)
+		payloadS := map[string]interface{}{
+			"app_code":    viper.GetString("motoapi.appcode"),
+			"chassis_num": chasisNumber,
+			"command":     "IMMOBILIZE",
+			"value":       immoblize, // No need for strconv.Itoa if immoblize is already an int
+			"param_name":  "DEVICE_UPDATE",
+		}
 
+		payload, err := json.Marshal(payloadS)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		client := &http.Client{}
-		req, err := http.NewRequest(method, url, payload)
+		req, err := http.NewRequest(method, url, bytes.NewBuffer(payload))
 
 		if err != nil {
 			fmt.Println(err)

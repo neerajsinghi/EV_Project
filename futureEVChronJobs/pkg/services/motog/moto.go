@@ -1,6 +1,7 @@
 package motog
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"futureEVChronJobs/pkg/entity"
@@ -73,15 +74,15 @@ type VehicleList struct {
 	}
 */
 type VehicleData struct {
-	ChargeCycle    int     `json:"chargecycle"`
-	Current        int     `json:"current"`
-	ChargeStatus   int     `json:"chargestatus"`
-	DTE            int     `json:"DTE"`
+	ChargeCycle    float64 `json:"chargecycle"`
+	Current        float64 `json:"current"`
+	ChargeStatus   float64 `json:"chargestatus"`
+	DTE            float64 `json:"DTE"`
 	Odometer       float64 `json:"odometer"`
 	Soc            float64 `json:"soc"`
 	IgnitionStatus int     `json:"ignitionstatus"`
 	Latitude       float64 `json:"latitude"`
-	MaxSpeed       int     `json:"max_speed"`
+	MaxSpeed       float64 `json:"max_speed"`
 	Longitude      float64 `json:"longitude"`
 	Timestamp      string  `json:"timestamp"`
 	VINNo          string  `json:"VIN No"`
@@ -162,8 +163,7 @@ func AddDeviceMoto() {
 			var dataVehicleData VehicleData
 			err = json.Unmarshal(body, &dataVehicleData)
 			if err != nil {
-				fmt.Println(err)
-				return
+				log.Println(err)
 			}
 			var iodDevice entity.IotBikeDB
 			numberPart := ""
@@ -181,7 +181,7 @@ func AddDeviceMoto() {
 			iodDevice.LastUpdate = dataVehicleData.Timestamp
 			iodDevice.TotalDistanceFloat = dataVehicleData.Odometer
 			iodDevice.TotalDistance = strconv.FormatFloat(dataVehicleData.Odometer, 'f', -1, 64)
-			iodDevice.Speed = strconv.Itoa(dataVehicleData.MaxSpeed)
+			iodDevice.Speed = strconv.FormatFloat(dataVehicleData.MaxSpeed, 'f', -1, 64)
 			iodDevice.Type = "moto"
 			var updateFields bson.M
 			conv, _ := bson.Marshal(iodDevice)
@@ -252,16 +252,21 @@ func ImmoblizeDevice(immoblize int, chasisNumber string) {
 	if data.ResponseData.IDToken != "" {
 		url := viper.GetString("motoapi.urlapp") + "/cloudControlCommand"
 		method := "POST"
-		payload := strings.NewReader(`{
-			"app_code": "` + viper.GetString("motoapi.appcode") + `",
-			"chassis_num": "` + chasisNumber + `",
-			"command": "IMMOBILIZE",
-			"value": "` + strconv.Itoa(immoblize) + `",
-			"param_name": "DEVICE_UPDATE",
-		}`)
+		payloadS := map[string]interface{}{
+			"app_code":    viper.GetString("motoapi.appcode"),
+			"chassis_num": chasisNumber,
+			"command":     "IMMOBILIZE",
+			"value":       immoblize, // No need for strconv.Itoa if immoblize is already an int
+			"param_name":  "DEVICE_UPDATE",
+		}
 
+		payload, err := json.Marshal(payloadS)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		client := &http.Client{}
-		req, err := http.NewRequest(method, url, payload)
+		req, err := http.NewRequest(method, url, bytes.NewBuffer(payload))
 
 		if err != nil {
 			fmt.Println(err)

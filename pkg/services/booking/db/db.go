@@ -424,22 +424,22 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 						Description: "Booking",
 					}
 					wallet.NewRepository("wallet").InsertOne(wall)
-					referralPath(booking)
 
 				}
 				udb.ChangeServiceType(document.ProfileID, "")
-				userData, err := db.GetUser([]string{booking.ProfileID})
-				if err == nil && len(userData) <= 0 {
-					return "", errors.New("user already has a booking")
-				}
-				if userData[0].FirebaseToken != nil {
-					predef, err := predefnotification.Get("bookingCompleted")
-					if err == nil && predef.Name == "bookingCompleted" {
-						notify.NewService().SendNotification(predef.Title, predef.Body, booking.ProfileID, predef.Type, *userData[0].FirebaseToken)
-					}
-				}
-				set["status"] = document.Status
 			}
+			referralPath(booking)
+			userData, err := db.GetUser([]string{booking.ProfileID})
+			if err == nil && len(userData) == 0 {
+				return "", errors.New("user not found")
+			}
+			if userData[0].FirebaseToken != nil {
+				predef, err := predefnotification.Get("bookingCompleted")
+				if err == nil && predef.Name == "bookingCompleted" {
+					notify.NewService().SendNotification(predef.Title, predef.Body, booking.ProfileID, predef.Type, *userData[0].FirebaseToken)
+				}
+			}
+			set["status"] = document.Status
 		} else {
 			return "", errors.New("ending station not found")
 		}

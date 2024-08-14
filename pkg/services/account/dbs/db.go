@@ -48,7 +48,7 @@ func (*accountService) SignUp(cred Credentials) (string, error) {
 	}
 	if cred.PhoneNo == "" {
 		err := errors.New("phone number required")
-		trestCommon.ECLog2("sign up failed email or phone number required", err)
+		trestCommon.ECLog2("sign up failed phone number required", err)
 		return "", err
 
 	}
@@ -61,12 +61,18 @@ func (*accountService) SignUp(cred Credentials) (string, error) {
 			return "", errors.New("sign up failed invalid email format")
 		}
 	}
-	if cred.ReferralCode != nil && *cred.ReferralCode != "" {
-		_, err := repo.FindOne(bson.M{"referral_code": *cred.ReferralCode}, bson.M{})
-		if err != nil {
+	if cred.ReferralCodeUsed != nil && *cred.ReferralCodeUsed != "" {
+		user, err := repo.FindOne(bson.M{"referral_code_used": *cred.ReferralCodeUsed}, bson.M{})
+		if user.ID.IsZero() {
 			trestCommon.ECLog2("sign up failed invalid referral code", err)
 			return "", errors.New("sign up failed invalid referral code")
 		}
+	}
+	// check name for special characters
+	if strings.ContainsAny(cred.Name, "!@#$%^&*()_+{}|:<>?") {
+		err := errors.New("name contains special characters")
+		trestCommon.ECLog2("sign up failed name contains special characters", err)
+		return "", err
 	}
 	_, err := CheckUser(cred.Email, cred.PhoneNo)
 
@@ -86,7 +92,7 @@ func (*accountService) SignUp(cred Credentials) (string, error) {
 		}
 	}
 
-	return "", errors.New("phone number already registed")
+	return "", errors.New("phone number already registered")
 }
 
 func (*accountService) SendVerificationEmail(email, pemail, uid string) (string, error) {

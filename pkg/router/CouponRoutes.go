@@ -27,4 +27,10 @@ var couponRoutes = Routes{
 		"/coupon/{id}",
 		coupon.DeleteCoupon,
 	},
+	Route{
+		"Get Coupon By userId",
+		"GET",
+		"/coupon/{id}",
+		coupon.GetCouponsForUsers,
+	},
 }

@@ -8,7 +8,7 @@ type Coupon interface {
 	DeleteCoupon(id string) error
 	GetCoupon() ([]entity.CouponDB, error)
 	GetCouponByType(couponType string) ([]entity.CouponDB, error)
-	GetCouponForUser(userID, couponType string) ([]entity.CouponDB, error)
+	GetCouponForUser(userID, couponType, city string) ([]entity.CouponDB, error)
 	GetCouponByCity(city string) ([]entity.CouponDB, error)
 	GetCouponByCityAndType(city, couponType string) ([]entity.CouponDB, error)
 }

@@ -4,10 +4,10 @@ import (
 	"bikeRental/pkg/repo/profile"
 	db "bikeRental/pkg/services/account/dbs"
 	utils "bikeRental/pkg/util"
+	"io"
 	"log"
 
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -57,7 +57,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to sent singup email"))
 
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "email already registered or phone number"})
+		json.NewEncoder(w).Encode(bson.M{"status": false, "error": err.Error()})
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -210,7 +210,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 func GetCredentials(r *http.Request) (db.Credentials, error) {
 	var user db.Credentials
 
-	body, _ := ioutil.ReadAll(r.Body)
+	body, _ := io.ReadAll(r.Body)
 	err := json.Unmarshal(body, &user)
 	if err != nil {
 		return user, err

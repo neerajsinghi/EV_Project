@@ -39,11 +39,35 @@ func (c *couponS) AddCoupon(document entity.CouponDB) (string, error) {
 		if document.City == nil {
 			return "", errors.New("city is required")
 		}
-	}
-	if strings.EqualFold(document.CouponType, "Discount") {
-		if document.City == nil {
+		if len(document.City) == 0 {
 			return "", errors.New("city is required")
 		}
+		if len(document.ServiceType) != 1 {
+			return "", errors.New("service type is required")
+		} else {
+			if document.ServiceType[0] != "hourly" {
+				return "", errors.New("service type can only be Ride now")
+			}
+		}
+
+	}
+	if strings.EqualFold(document.CouponType, "Discount") {
+		if len(document.City) == 0 {
+			return "", errors.New("city is required")
+		}
+		if document.Discount == 0 {
+			return "", errors.New("discount is required")
+		}
+		if document.MaxValue == 0 {
+			return "", errors.New("max value is required")
+		}
+		if document.MaxUsageByUser == 0 {
+			return "", errors.New("max usage by user is required")
+		}
+		if len(document.ServiceType) == 0 {
+			return "", errors.New("service type is required")
+		}
+
 	}
 
 	data, err := repo.InsertOne(document)
@@ -134,7 +158,7 @@ func (c *couponS) GetCoupon() ([]entity.CouponDB, error) {
 func (c *couponS) GetCouponByCityAndType(city, typeC string) ([]entity.CouponDB, error) {
 
 	cursor, err := repoG.Aggregate(bson.A{
-		bson.D{{Key: "$match", Value: bson.D{{Key: "service_type", Value: typeC}, {Key: "city", Value: city}}}},
+		bson.D{{Key: "$match", Value: bson.D{{Key: "service_type", Value: bson.D{{Key: "$regex", Value: primitive.Regex{Pattern: typeC, Options: "i"}}}}, {Key: "city", Value: bson.D{{Key: "$regex", Value: primitive.Regex{Pattern: city, Options: "i"}}}}}}},
 		bson.D{{
 			Key: "$lookup",
 			Value: bson.D{
@@ -176,7 +200,7 @@ func (c *couponS) GetCouponByCityAndType(city, typeC string) ([]entity.CouponDB,
 func (c *couponS) GetCouponByCity(city string) ([]entity.CouponDB, error) {
 
 	cursor, err := repoG.Aggregate(bson.A{
-		bson.D{{Key: "$match", Value: bson.D{{Key: "city", Value: city}}}},
+		bson.D{{Key: "$match", Value: bson.D{{Key: "city", Value: bson.D{{Key: "$regex", Value: primitive.Regex{Pattern: city, Options: "i"}}}}}}},
 		bson.D{{
 			Key: "$lookup",
 			Value: bson.D{
@@ -217,7 +241,7 @@ func (c *couponS) GetCouponByCity(city string) ([]entity.CouponDB, error) {
 
 func (c *couponS) GetCouponByType(couponType string) ([]entity.CouponDB, error) {
 	cursor, err := repoG.Aggregate(bson.A{
-		bson.D{{Key: "$match", Value: bson.D{{Key: "service_type", Value: couponType}}}},
+		bson.D{{Key: "$match", Value: bson.D{{Key: "service_type", Value: bson.D{{Key: "$regex", Value: primitive.Regex{Pattern: couponType, Options: "i"}}}}}}},
 		bson.D{{
 			Key: "$lookup",
 			Value: bson.D{
@@ -256,9 +280,9 @@ func (c *couponS) GetCouponByType(couponType string) ([]entity.CouponDB, error) 
 	return data, nil
 }
 
-func (c *couponS) GetCouponForUser(userID, couponType string) ([]entity.CouponDB, error) {
+func (c *couponS) GetCouponForUser(userID, couponType, city string) ([]entity.CouponDB, error) {
 	cursor, err := repoG.Aggregate(bson.A{
-		bson.D{{Key: "$match", Value: bson.D{{Key: "user_id", Value: userID}, {Key: "service_type", Value: couponType}}}},
+		bson.D{{Key: "$match", Value: bson.D{{Key: "service_type", Value: bson.D{{Key: "$regex", Value: primitive.Regex{Pattern: couponType, Options: "i"}}}}, {Key: "city", Value: bson.D{{Key: "$regex", Value: primitive.Regex{Pattern: city, Options: "i"}}}}}}},
 		bson.D{{
 			Key: "$lookup",
 			Value: bson.D{

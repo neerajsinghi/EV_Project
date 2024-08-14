@@ -131,7 +131,7 @@ func CheckBooking() {
 			}
 			//stop booking
 			totalDistance := booking.BikeWithDevice.TotalDistanceFloat
-			bdb.ChangeStatusStopped(booking.ID.Hex(), wallet.TotalBalance, time.Now().Unix(), totalDistance)
+			bdb.ChangeStatusStopped(booking.ID.Hex(), wallet.TotalBalance-walletAmount, time.Now().Unix(), totalDistance)
 		}
 	}
 
