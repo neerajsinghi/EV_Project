@@ -187,18 +187,27 @@ func (s *service) GetStationByID(id string) (entity.StationDB, error) {
 }
 
 func (s *service) GetNearByStation(lat, long float64, distance int) ([]entity.StationDB, error) {
-	resp, err := repo.Find(bson.M{
-		"location": bson.M{
-			"$nearSphere": bson.M{
-				"$geometry": bson.M{
-					"type":        "Point",
-					"coordinates": []float64{long, lat},
+	resp, err := repo.Aggregate(bson.A{bson.D{
+		{Key: "$geoNear",
+			Value: bson.D{
+				{Key: "near",
+					Value: bson.D{
+						{Key: "type", Value: "Point"},
+						{Key: "coordinates",
+							Value: bson.A{
+								long,
+								lat,
+							},
+						},
+					},
 				},
-				"$maxDistance": distance,
+				{Key: "distanceField", Value: "distance"},
+				{Key: "maxDistance", Value: distance},
+				{Key: "spherical", Value: true},
 			},
 		},
-		"status": "available",
-	}, bson.M{})
+	},
+	})
 	if err != nil {
 		return nil, errors.New("stations not found")
 	}

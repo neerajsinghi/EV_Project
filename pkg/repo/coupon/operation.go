@@ -70,8 +70,8 @@ func (r *repo) UpdateOne(filter, update bson.M) (string, error) {
 }
 
 // used by get profile ,login and email verification
-func (r *repo) FindOne(filter, projection bson.M) (entity.CouponReport, error) {
-	var profile entity.CouponReport
+func (r *repo) FindOne(filter, projection bson.M) (entity.CouponDB, error) {
+	var profile entity.CouponDB
 	cursor, err := trestCommon.FindSort(filter, projection, bson.M{"created_time": -1}, 1, 0, r.CollectionName)
 	if err != nil {
 		trestCommon.ECLog3(

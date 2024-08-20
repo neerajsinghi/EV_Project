@@ -156,7 +156,7 @@ func ImmoblizeDeviceRoadcast(deviceID int, action string) {
 	method := "POST"
 
 	payload := strings.NewReader(`{
-    "device_id": ` + strconv.Itoa(deviceID) + `,
+    "device_id": "` + strconv.Itoa(deviceID) + `",
     "type": "` + action + `"
 }`)
 

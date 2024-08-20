@@ -8,6 +8,7 @@ import (
 	pdb "bikeRental/pkg/services/plan/pDB"
 	userattendance "bikeRental/pkg/services/userAttendance"
 	"errors"
+	"net/mail"
 	"strconv"
 	"time"
 
@@ -180,6 +181,14 @@ func (s *service) UpdateUser(id string, user entity.ProfileDB) (string, error) {
 	set := bson.M{}
 	if user.Name != "" {
 		set["name"] = user.Name
+	}
+
+	if user.PEmail != "" {
+		_, err := mail.ParseAddress(user.PEmail)
+		if err != nil {
+			return "", errors.New("sign up failed invalid email format")
+		}
+		set["p_email"] = user.PEmail
 	}
 	if user.CountryCode != nil && *user.CountryCode != "" {
 		set["country_code"] = *user.CountryCode

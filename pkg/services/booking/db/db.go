@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strconv"
 
 	bDB "bikeRental/pkg/services/bikeDevice/db"
 	bikedb "bikeRental/pkg/services/iotBike/db"
@@ -326,10 +327,12 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 	}
 	if document.Status == "completed" {
 		totalDistanceInt := devices[0].TotalDistanceFloat
-
 		set["end_km"] = totalDistanceInt
-		set["total_distance"] = totalDistanceInt - booking.StartKM
 		userTotalDist := (totalDistanceInt - booking.StartKM)
+		if devices[0].Type != "moto" {
+			userTotalDist = userTotalDist / 1000
+		}
+		set["total_distance"] = userTotalDist
 		greenPoints := int64(userTotalDist * 5)
 		carbonSaved := userTotalDist * 80
 		profile := entity.ProfileDB{
@@ -345,6 +348,7 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 		if document.EndingStationID != "" {
 			set["ending_station_id"] = document.EndingStationID
 			station, err := sdb.NewService().GetStationByID(document.EndingStationID)
+			//station, err := sdb.NewService().GetNearByStation(devices[0].Location.Coordinates[1], devices[0].Location.Coordinates[0], 1000)
 			if err == nil {
 				set["ending_station"] = &station
 			}
@@ -352,10 +356,11 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 			bookedlogic.ChangeOnGoing(id)
 			timeBooked := int((endTime - booking.StartTime) / 60)
 			set["time_booked"] = timeBooked
+			price := float64(0)
+
 			if booking.BookingType == "hourly" {
 				plan, err := pdb.NewService().GetPlans(booking.BookingType, booking.City)
 				if err == nil && len(plan) > 0 {
-					price := float64(0)
 					maxPrice := float64(0)
 					maxTime := 0
 					extendedPrice := 0.0
@@ -424,9 +429,10 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 						Description: "Booking",
 					}
 					wallet.NewRepository("wallet").InsertOne(wall)
-
+					set["price"] = price
 				}
 				udb.ChangeServiceType(document.ProfileID, "")
+
 			}
 			referralPath(booking)
 			userData, err := db.GetUser([]string{booking.ProfileID})
@@ -436,9 +442,11 @@ func (s *service) UpdateBooking(id string, document entity.BookingDB) (string, e
 			if userData[0].FirebaseToken != nil {
 				predef, err := predefnotification.Get("bookingCompleted")
 				if err == nil && predef.Name == "bookingCompleted" {
-					notify.NewService().SendNotification(predef.Title, predef.Body, booking.ProfileID, predef.Type, *userData[0].FirebaseToken)
+					priceS := strconv.FormatFloat(price, 'f', 2, 64)
+					notify.NewService().SendNotification(predef.Title, predef.Body+" and "+priceS+" has been charged for the ride", booking.ProfileID, predef.Type, *userData[0].FirebaseToken)
 				}
 			}
+
 			set["status"] = document.Status
 		} else {
 			return "", errors.New("ending station not found")
@@ -485,9 +493,9 @@ func referralPath(booking *entity.BookingOut) {
 			err := referral.Decode(&ref)
 
 			if err == nil {
-				bonus := 40.0
+				bonus := 50.0
 				value, err := cdb.GetCouponByType("referral")
-				if err == nil {
+				if err == nil && value.MaxValue > 0 {
 					bonus = value.MaxValue
 				}
 				wall := entity.WalletS{
@@ -556,6 +564,7 @@ func ChangeStatusStopped(id string, price float64, endTime int64, endKm float64)
 	db.UpdateUser(booking.ProfileID, profile)
 	_, err := repo.UpdateOne(filter, bson.M{"$set": set})
 	log.Println("error", err)
+
 }
 
 func (s *service) GetBookingByPlanAndID(planID, userId string) ([]entity.BookingOut, error) {

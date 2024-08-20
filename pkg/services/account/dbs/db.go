@@ -61,8 +61,17 @@ func (*accountService) SignUp(cred Credentials) (string, error) {
 			return "", errors.New("sign up failed invalid email format")
 		}
 	}
+	cred.PEmail = strings.ToLower(cred.PEmail)
+	if cred.PEmail != "" {
+		//validate PEmail format
+		_, err := mail.ParseAddress(cred.PEmail)
+		if err != nil {
+			trestCommon.ECLog2("sign up failed invalid email format", err)
+			return "", errors.New("sign up failed invalid email format")
+		}
+	}
 	if cred.ReferralCodeUsed != nil && *cred.ReferralCodeUsed != "" {
-		user, err := repo.FindOne(bson.M{"referral_code_used": *cred.ReferralCodeUsed}, bson.M{})
+		user, err := repo.FindOne(bson.M{"referral_code": *cred.ReferralCodeUsed}, bson.M{})
 		if user.ID.IsZero() {
 			trestCommon.ECLog2("sign up failed invalid referral code", err)
 			return "", errors.New("sign up failed invalid referral code")

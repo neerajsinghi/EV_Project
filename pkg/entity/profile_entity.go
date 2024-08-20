@@ -10,6 +10,7 @@ import (
 type ProfileDB struct {
 	ID                  primitive.ObjectID `bson:"_id" json:"id,omitempty"`
 	Email               string             `bson:"email" json:"email,omitempty"`
+	PEmail              string             `bson:"p_email" json:"pEmail,omitempty"`
 	Status              string             `bson:"status" json:"status,omitempty"`
 	StatusBool          *bool              `bson:"status_bool" json:"statusBool,omitempty"`
 	JoiningDate         string             `bson:"joining_date" json:"joiningDate,omitempty"`

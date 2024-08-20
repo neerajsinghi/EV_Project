@@ -160,3 +160,33 @@ func (r *repo) DeleteOne(filter bson.M) error {
 	}
 	return nil
 }
+
+func (r *repo) Aggregate(pipeline bson.A) ([]entity.StationDB, error) {
+	var profiles []entity.StationDB
+	cursor, err := trestCommon.Aggregate(pipeline, r.CollectionName)
+	if err != nil {
+		trestCommon.ECLog3(
+			"Find profiles",
+			err,
+			logrus.Fields{
+				"collection name": r.CollectionName,
+			})
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+	for cursor.Next(context.TODO()) {
+		var profile entity.StationDB
+		if err = cursor.Decode(&profile); err != nil {
+			trestCommon.ECLog3(
+				"Find profiles",
+				err,
+				logrus.Fields{
+					"collection name": r.CollectionName,
+					"error at":        cursor.RemainingBatchLength(),
+				})
+			return profiles, nil
+		}
+		profiles = append(profiles, profile)
+	}
+	return profiles, nil
+}

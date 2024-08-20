@@ -25,8 +25,8 @@ func NewCoupon() Coupon {
 func (c *couponS) AddCoupon(document entity.CouponDB) (string, error) {
 	document.ID = primitive.NewObjectID()
 	document.CreatedTime = primitive.NewDateTimeFromTime(time.Now())
-	if strings.EqualFold(document.CouponType, "Referral") {
-		coupon, _ := GetCouponByType("Referral")
+	if strings.EqualFold(document.CouponType, "referral") {
+		coupon, _ := GetCouponByType("referral")
 		if coupon.Code != "" {
 			return "", errors.New("referral coupon already exists")
 		}
@@ -77,14 +77,14 @@ func (c *couponS) AddCoupon(document entity.CouponDB) (string, error) {
 	return data, nil
 }
 
-func GetCouponByCode(code string) (*entity.CouponReport, error) {
+func GetCouponByCode(code string) (*entity.CouponDB, error) {
 	data, err := repo.FindOne(bson.M{"code": code}, bson.M{})
 	if err != nil {
 		return nil, errors.New("error in finding coupon")
 	}
 	return &data, nil
 }
-func GetCouponByType(couponType string) (*entity.CouponReport, error) {
+func GetCouponByType(couponType string) (*entity.CouponDB, error) {
 	data, err := repo.FindOne(bson.M{"coupon_type": couponType}, bson.M{})
 	if err != nil {
 		return nil, err
