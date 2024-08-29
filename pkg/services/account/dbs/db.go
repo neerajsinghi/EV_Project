@@ -166,12 +166,16 @@ func (*accountService) SendEmailOTP(email string) (string, error) {
 	}
 	return "email sent successfully", nil
 }
-func (*accountService) LoginUsingPhone(phone string) (string, error) {
+func (*accountService) LoginUsingPhone(phone, deviceID string) (string, error) {
 	data, err := CheckUser("", phone)
 	if err != nil {
 		trestCommon.ECLog3("verify user not found", err, logrus.Fields{"phone": phone})
 		return "", err
 	}
+	if deviceID != "" && data.LastLoginDeviceID != "" && data.LastLoginDeviceID != deviceID {
+		return "device not matched", errors.New("user already logged in from another device")
+	}
+
 	if data.Status == "deleted" {
 		return "user deleted", errors.New("user deleted")
 	}
@@ -186,7 +190,7 @@ func (*accountService) LoginUsingPhone(phone string) (string, error) {
 	return "otp Sent", nil
 }
 
-func (*accountService) VerifyOTP(phone, otp, token string) (*entity.ProfileDB, string, error) {
+func (*accountService) VerifyOTP(phone, otp, token, deviceID string) (*entity.ProfileDB, string, error) {
 	data, err := CheckUser("", phone)
 	if err != nil {
 		trestCommon.ECLog3("verify user not found", err, logrus.Fields{"phone": phone})
@@ -198,7 +202,7 @@ func (*accountService) VerifyOTP(phone, otp, token string) (*entity.ProfileDB, s
 		trestCommon.ECLog3("verify user unable to update status", err, logrus.Fields{"phone": phone})
 		return nil, "", err
 	}
-	_, err = repo.UpdateOne(bson.M{"_id": data.ID}, bson.M{"$set": bson.M{"verified_time": time.Now(), "firebase_token": token}})
+	_, err = repo.UpdateOne(bson.M{"_id": data.ID}, bson.M{"$set": bson.M{"verified_time": time.Now(), "firebase_token": token, "last_login_device_id": deviceID}})
 	if err != nil {
 		trestCommon.ECLog3("verify user unable to update status", err, logrus.Fields{"phone": phone})
 		return nil, "", err
@@ -423,7 +427,15 @@ func (*accountService) VerifyResetLink(cred Credentials) (string, string, error)
 
 	return "verified", userData.Email, nil
 }
-
+func (*accountService) Logout(id string) (string, error) {
+	idObject, _ := primitive.ObjectIDFromHex(id)
+	_, err := repo.UpdateOne(bson.M{"_id": idObject}, bson.M{"$set": bson.M{"logout_time": time.Now(), "firebase_token": "", "last_login_device_id": ""}})
+	if err != nil {
+		trestCommon.ECLog3("logout failed", err, logrus.Fields{"id": id})
+		return "", errors.New("logout failed")
+	}
+	return "logged out successfully", nil
+}
 func GetUser(ids []string) ([]entity.ProfileDB, error) {
 	filter := bson.A{}
 	for _, id := range ids {

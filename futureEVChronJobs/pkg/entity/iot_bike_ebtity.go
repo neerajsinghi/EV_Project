@@ -25,6 +25,7 @@ type IotBikeDB struct {
 	TotalDistance            string   `bson:"totalDistance" json:"totalDistanceS"`
 	Type                     string   `bson:"type" json:"type"`
 	Valid                    int      `bson:"valid" json:"valid"`
+	ExternalPower            float64  `bson:"external_power" json:"external_power"`
 }
 type Location struct {
 	Type        string    `bson:"type" json:"type"`

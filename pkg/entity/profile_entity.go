@@ -13,32 +13,22 @@ type ProfileDB struct {
 	PEmail              string             `bson:"p_email" json:"pEmail,omitempty"`
 	Status              string             `bson:"status" json:"status,omitempty"`
 	StatusBool          *bool              `bson:"status_bool" json:"statusBool,omitempty"`
-	JoiningDate         string             `bson:"joining_date" json:"joiningDate,omitempty"`
 	Name                string             `bson:"name" json:"name,omitempty"`
 	DOB                 string             `bson:"dob" json:"dob,omitempty"`
-	Designation         *string            `bson:"designation" json:"designation,omitempty"`
 	Gender              *string            `bson:"gender" json:"gender,omitempty"`
 	PhoneNo             string             `bson:"phone_no" json:"phoneNumber,omitempty"`
 	PhoneOTP            *string            `bson:"phone_otp" json:"phoneOtp,omitempty"`
 	Role                *string            `bson:"roles" json:"role,omitempty"`
 	PhoneNoVerified     bool               `bson:"phone_no_verified" json:"phoneNumberVerified,omitempty"`
 	Address             *AddressDB         `bson:"address" json:"address,omitempty"`
-	About               *string            `bson:"about" json:"about,omitempty"`
 	UrlToProfileImage   *string            `bson:"url_to_profile_image" json:"url_to_profile_image,omitempty"`
 	Password            *string            `bson:"password" json:"password,omitempty"`
 	CreatedTime         primitive.DateTime `bson:"created_time" json:"createdTime,omitempty"`
-	EmailLoginOTP       *string            `bson:"email_login_otp" json:"emailLoginOtp,omitempty"`
-	OTP                 *string            `bson:"otp_code" json:"otp_code,omitempty"`
 	UpdateTime          time.Time          `bson:"update_time" json:"updateTime,omitempty"`
-	EmailSentTime       *time.Time         `bson:"email_sent_time" json:"emailSentTime,omitempty"`
 	VerificationCode    *string            `bson:"verification_code" json:"verificationCode,omitempty"`
 	PasswordResetCode   *string            `bson:"password_reset_code" json:"passwordResetCode,omitempty"`
 	CountryCode         *string            `bson:"country_code" json:"countryCode,omitempty"`
-	PasswordResetTime   time.Time          `bson:"password_reset_time" json:"passwordResetTime,omitempty"`
-	LastLoginDeviceID   *string            `bson:"last_login_device_id" json:"lastLoginDeviceID,omitempty"`
-	LastLoginDeviceName *string            `bson:"last_login_device_name" json:"lastLoginDeviceName,omitempty"`
-	LastLoginLocation   *string            `bson:"last_login_location" json:"lastLoginLocation,omitempty"`
-	Online              *bool              `bson:"online" json:"online,omitempty"`
+	LastLoginDeviceID   string             `bson:"last_login_device_id" json:"lastLoginDeviceID,omitempty"`
 	DLVerified          *bool              `bson:"dl_verified" json:"dlVerified,omitempty"`
 	DLFrontImage        string             `bson:"dl_front_image" json:"dlFrontImage,omitempty"`
 	DLBackImage         string             `bson:"dl_back_image" json:"dlBackImage,omitempty"`

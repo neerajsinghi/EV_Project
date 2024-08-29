@@ -39,4 +39,10 @@ var accountRoutes = Routes{
 		"/verify/otp",
 		account_service.VerifyOTPAndSendToken,
 	},
+	Route{
+		"Logout",
+		"GET",
+		"/logout/{id}",
+		account_service.LogoutHandler,
+	},
 }

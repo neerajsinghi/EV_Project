@@ -40,9 +40,9 @@ func (s *service) GetUserById(id string) (entity.ProfileOut, error) {
 	}
 
 	res[0].Password = nil
-	if res[0].PlanID != nil {
+	if res[0].PlanID != nil && res[0].ServiceType != "hourly" {
 		res[0].PlanRemainingTime = res[0].PlanEndTime - time.Now().Unix()
-		if res[0].PlanRemainingTime < 0 {
+		if res[0].PlanRemainingTime <= 0 {
 			RemovePlan(res[0].ID.Hex())
 		}
 	}
@@ -88,7 +88,6 @@ func (s *service) GetUsers(userType string) ([]entity.ProfileOut, error) {
 		} else {
 			for _, wallet := range res[i].Wallet {
 				res[i].TotalBalance += wallet.DepositedMoney - wallet.UsedMoney
-
 			}
 		}
 		if res[i].Booking != nil {
@@ -96,9 +95,9 @@ func (s *service) GetUsers(userType string) ([]entity.ProfileOut, error) {
 		} else {
 			res[i].TotalRides = 0
 		}
-		if res[i].PlanID != nil {
+		if res[i].PlanID != nil && res[i].ServiceType != "hourly" {
 			res[i].PlanRemainingTime = res[i].PlanEndTime - time.Now().Unix()
-			if res[i].PlanRemainingTime < 0 {
+			if res[i].PlanRemainingTime <= 0 {
 				RemovePlan(res[i].ID.Hex())
 			}
 		}

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	trestCommon "github.com/Trestx-technology/trestx-common-go-lib"
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -101,15 +102,24 @@ func LoginUsingPhone(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to parse credentials"))
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Something Went wrong"})
+		if err.Error() != "user already logged in from another device" {
+			json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Something Went wrong"})
+		} else {
+			json.NewEncoder(w).Encode(bson.M{"status": false, "error": err.Error()})
+		}
 		return
 
 	}
-	response, err := accountService.LoginUsingPhone(user.PhoneNo)
+
+	response, err := accountService.LoginUsingPhone(user.PhoneNo, user.LastLoginDeviceID)
 	if err != nil {
 		trestCommon.ECLog1(errors.Wrapf(err, "unable to login"))
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"status": false, "error": "User not registered"})
+		if err.Error() != "user already logged in from another device" {
+			json.NewEncoder(w).Encode(bson.M{"status": false, "error": "Something Went wrong"})
+		} else {
+			json.NewEncoder(w).Encode(bson.M{"status": false, "error": err.Error()})
+		}
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -164,7 +174,7 @@ func VerifyOTPAndSendToken(w http.ResponseWriter, r *http.Request) {
 	if user.FirebaseToken != nil {
 		token = *user.FirebaseToken
 	}
-	data, token, err := accountService.VerifyOTP(user.PhoneNo, *user.PhoneOTP, token)
+	data, token, err := accountService.VerifyOTP(user.PhoneNo, *user.PhoneOTP, token, user.LastLoginDeviceID)
 	if err != nil {
 		if err.Error() == "user not verified" {
 			trestCommon.ECLog1(errors.Wrapf(err, "unable to login"))
@@ -217,4 +227,11 @@ func GetCredentials(r *http.Request) (db.Credentials, error) {
 	}
 	user.Email = strings.TrimSpace(user.Email)
 	return user, err
+}
+
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	utils.SetOutput(w)
+	id := mux.Vars(r)["id"]
+	data, err := accountService.Logout(id)
+	utils.SendOutput(err, w, r, data, nil, "Logout")
 }

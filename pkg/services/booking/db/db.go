@@ -505,6 +505,13 @@ func referralPath(booking *entity.BookingOut) {
 					Description:    "Referral Bonus",
 				}
 				wallet.NewRepository("wallet").InsertOne(wall)
+				wall = entity.WalletS{
+					ID:             primitive.NewObjectID(),
+					UserID:         ref.ReferralOfId,
+					DepositedMoney: float64(30),
+					Description:    "Referral Bonus",
+				}
+				wallet.NewRepository("wallet").InsertOne(wall)
 				predef, err := predefnotification.Get("referalComplete")
 				if err == nil && predef.Name == "referalComplete" {
 					notify.NewService().SendNotification(predef.Title, predef.Body, ref.ReferrerBy, predef.Type, *ref.ReferredByProfile.FirebaseToken)

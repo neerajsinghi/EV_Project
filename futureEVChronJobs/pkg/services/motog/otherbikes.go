@@ -78,6 +78,12 @@ func GetDataFromPullAPI() {
 		} else if data.Data[i].TotalDistanceFloat != 0 {
 			data.Data[i].TotalDistance = strconv.FormatFloat(data.Data[i].TotalDistanceFloat, 'f', -1, 64)
 		}
+		if data.Data[i].ExternalPower != 0 {
+			data.Data[i].BatteryLevel = (data.Data[i].ExternalPower / 40.5) * 100
+			if data.Data[i].BatteryLevel > 100 {
+				data.Data[i].BatteryLevel = 100
+			}
+		}
 		data.Data[i].Location.Type = "Point"
 		long, _ = strconv.ParseFloat(d.Longitude, 64)
 		lat, _ = strconv.ParseFloat(d.Latitude, 64)
