@@ -9,7 +9,7 @@ demonstrate the language, standard libraries, and tools.
 ## Clone the project
 
 ```
-git clone https://go.googlesource.com/example
+git clone https://github.com/neerajsinghi/EV_Project
 cd example
 ```
 
